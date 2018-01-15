@@ -704,12 +704,11 @@ struct DBCSpellEntry
     char*     SpellName[8];                                 // 120-127
     uint32    SpellNameFlag;                              // 128
     char*     Rank[8];                                      // 129-136
-    // (Nostalrius)
-    uint32    Custom; //RankFlags;                                  // 137
-    //char*     Description[8];                             // 138-145 not used
-    //uint32    DescriptionFlags;                           // 146     not used
-    //char*     ToolTip[8];                                 // 147-154 not used
-    //uint32    ToolTipFlags;                               // 155     not used
+    uint32    RankFlags;                                  // 137
+    char*     Description[8];                             // 138-145 not used
+    uint32    DescriptionFlags;                           // 146     not used
+    char*     ToolTip[8];                                 // 147-154 not used
+    uint32    ToolTipFlags;                               // 155     not used
     uint32    ManaCostPercentage;                           // 156
     uint32    StartRecoveryCategory;                        // 157
     uint32    StartRecoveryTime;                            // 158
@@ -719,11 +718,11 @@ struct DBCSpellEntry
     uint32    MaxAffectedTargets;                           // 163
     uint32    DmgClass;                                     // 164 defenseType
     uint32    PreventionType;                               // 165
-    //uint32    StanceBarOrder;                             // 166 not used
+    int32    StanceBarOrder;                             // 166 not used
     float     DmgMultiplier[MAX_EFFECT_INDEX];              // 167-169
-    //uint32    MinFactionId;                               // 170 not used, and 0 in 2.4.2
-    //uint32    MinReputation;                              // 171 not used, and 0 in 2.4.2
-    //uint32    RequiredAuraVision;                         // 172 not used
+    uint32    MinFactionId;                               // 170 not used, and 0 in 2.4.2
+    uint32    MinReputation;                              // 171 not used, and 0 in 2.4.2
+    uint32    RequiredAuraVision;                         // 172 not used
 
     // prevent creating custom entries (copy data from original in fact)
     DBCSpellEntry(DBCSpellEntry const&);                      // DON'T must have implementation

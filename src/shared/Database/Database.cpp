@@ -575,7 +575,7 @@ bool Database::HasAsyncQuery()
 
 bool Database::CheckRequiredMigrations(const char **migrations)
 {
-    std::set<std::string> appliedMigrations;
+    /*std::set<std::string> appliedMigrations;
 
     QueryResult *result = Query("SELECT * FROM `migrations`");
 
@@ -626,7 +626,7 @@ bool Database::CheckRequiredMigrations(const char **migrations)
 
         for (std::set<std::string>::const_iterator it = appliedMigrations.begin(); it != appliedMigrations.end(); it++)
             sLog.outErrorDb("\t%s", (*it).c_str());
-    }
+    }*/
 
     return true;
 }

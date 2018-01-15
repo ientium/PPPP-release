@@ -30,6 +30,8 @@
 #include "BattleGroundMgr.h"
 #include "MapManager.h"
 #include "Unit.h"
+#include <iostream>
+#include <fstream>
 
 SpellMgr::SpellMgr()
 {
@@ -4331,24 +4333,215 @@ void SpellMgr::LoadFacingCasterFlags()
     sLog.outString(">> Loaded %u facing caster flags", count);
 }
 
+std::string ReplaceString(std::string subject) {
+    if (subject.empty()) { return std::string(); }
+    size_t pos = 0;
+    for (int i = 0; i < subject.length(); i++)
+    {
+        if (subject.at(i) == 13) //r
+            subject.at(i) = '^';
+        else if (subject.at(i) == 10) //n
+            subject.at(i) = '{';
+        else if (subject.at(i) == 39) //'
+            subject.at(i) = '}';
+    }
+    return subject;
+
+}
 void SpellMgr::LoadSpells()
 {
-    uint32 oldMSTime = WorldTimer::getMSTime();
-    sLog.outString("Loading spells ...");
-    mSpellEntryMap.resize(sSpellStore.GetNumRows(), nullptr);
+    sLog.outString("Extracting spells ...");
 
-    for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
+    std::ofstream myfile("spells.sql");
+    if (myfile.is_open())
     {
-        if (DBCSpellEntry const* spellEntry = sSpellStore.LookupEntry(i))
+        myfile << "-- Dumping spell data\n-- Remember to replace substitute symbols.\n-- ^ is \\r\n-- { is \\n\n-- } is \\'\n";
+        for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
         {
-            SpellEntry* newSpell = new SpellEntry();
-            if (!newSpell->Load(spellEntry))
+            if (DBCSpellEntry const* spellEntry = sSpellStore.LookupEntry(i))
             {
-                delete newSpell;
-                continue;
+                myfile << "INSERT INTO `spell_template` VALUES (";
+                myfile << spellEntry->Id << ", "; // 1
+                myfile << spellEntry->School << ", "; // 2
+                myfile << spellEntry->Category << ", "; // 3
+                myfile << spellEntry->castUI << ", "; // 4
+                myfile << spellEntry->Dispel << ", "; // 5
+                myfile << spellEntry->Mechanic << ", "; // 6
+                myfile << spellEntry->Attributes << ", "; // 7
+                myfile << spellEntry->AttributesEx << ", "; // 8
+                myfile << spellEntry->AttributesEx2 << ", "; // 9
+                myfile << spellEntry->AttributesEx3 << ", "; // 10
+                myfile << spellEntry->AttributesEx4 << ", "; // 11
+                myfile << spellEntry->Stances << ", "; // 12
+                myfile << spellEntry->StancesNot << ", "; // 13
+                myfile << spellEntry->Targets << ", "; // 14
+                myfile << spellEntry->TargetCreatureType << ", "; // 15
+                myfile << spellEntry->RequiresSpellFocus << ", "; // 16
+                myfile << spellEntry->CasterAuraState << ", "; // 17
+                myfile << spellEntry->TargetAuraState << ", "; // 18
+                myfile << spellEntry->CastingTimeIndex << ", "; // 19
+                myfile << spellEntry->RecoveryTime << ", "; // 20
+                myfile << spellEntry->CategoryRecoveryTime << ", "; // 21
+                myfile << spellEntry->InterruptFlags << ", "; // 22
+                myfile << spellEntry->AuraInterruptFlags << ", "; // 23
+                myfile << spellEntry->ChannelInterruptFlags << ", "; // 24
+                myfile << spellEntry->procFlags << ", "; // 25
+                myfile << spellEntry->procChance << ", "; // 26
+                myfile << spellEntry->procCharges << ", "; // 27
+                myfile << spellEntry->maxLevel << ", "; // 28
+                myfile << spellEntry->baseLevel << ", "; // 29
+                myfile << spellEntry->spellLevel << ", "; // 30
+                myfile << spellEntry->DurationIndex << ", "; // 31
+                myfile << spellEntry->powerType << ", "; // 32
+                myfile << spellEntry->manaCost << ", "; // 33
+                myfile << spellEntry->manaCostPerlevel << ", "; // 34
+                myfile << spellEntry->manaPerSecond << ", "; // 35
+                myfile << spellEntry->manaPerSecondPerLevel << ", "; // 36
+                myfile << spellEntry->rangeIndex << ", "; // 37
+                myfile << spellEntry->speed << ", "; // 38
+                myfile << spellEntry->modalNextSpell << ", "; // 39
+                myfile << spellEntry->StackAmount << ", "; // 40
+                myfile << spellEntry->Totem[0] << ", "; // 41
+                myfile << spellEntry->Totem[1] << ", "; // 42
+                myfile << spellEntry->Reagent[0] << ", "; // 43
+                myfile << spellEntry->Reagent[1] << ", "; // 44
+                myfile << spellEntry->Reagent[2] << ", "; // 45
+                myfile << spellEntry->Reagent[3] << ", "; // 46
+                myfile << spellEntry->Reagent[4] << ", "; // 47
+                myfile << spellEntry->Reagent[5] << ", "; // 48
+                myfile << spellEntry->Reagent[6] << ", "; // 49
+                myfile << spellEntry->Reagent[7] << ", "; // 50
+                myfile << spellEntry->ReagentCount[0] << ", "; // 51
+                myfile << spellEntry->ReagentCount[1] << ", "; // 52
+                myfile << spellEntry->ReagentCount[2] << ", "; // 53
+                myfile << spellEntry->ReagentCount[3] << ", "; // 54
+                myfile << spellEntry->ReagentCount[4] << ", "; // 55
+                myfile << spellEntry->ReagentCount[5] << ", "; // 56
+                myfile << spellEntry->ReagentCount[6] << ", "; // 57
+                myfile << spellEntry->ReagentCount[7] << ", "; // 58
+                myfile << spellEntry->EquippedItemClass << ", "; // 59
+                myfile << spellEntry->EquippedItemSubClassMask << ", "; // 60
+                myfile << spellEntry->EquippedItemInventoryTypeMask << ", "; // 61
+                myfile << spellEntry->Effect[0] << ", "; // 62
+                myfile << spellEntry->Effect[1] << ", "; // 63
+                myfile << spellEntry->Effect[2] << ", "; // 64
+                myfile << spellEntry->EffectDieSides[0] << ", "; // 65
+                myfile << spellEntry->EffectDieSides[1] << ", "; // 66
+                myfile << spellEntry->EffectDieSides[2] << ", "; // 67
+                myfile << spellEntry->EffectBaseDice[0] << ", "; // 68
+                myfile << spellEntry->EffectBaseDice[1] << ", "; // 69
+                myfile << spellEntry->EffectBaseDice[2] << ", "; // 70
+                myfile << spellEntry->EffectDicePerLevel[0] << ", "; // 71
+                myfile << spellEntry->EffectDicePerLevel[1] << ", "; // 72
+                myfile << spellEntry->EffectDicePerLevel[2] << ", "; // 73
+                myfile << spellEntry->EffectRealPointsPerLevel[0] << ", "; // 74
+                myfile << spellEntry->EffectRealPointsPerLevel[1] << ", "; // 75
+                myfile << spellEntry->EffectRealPointsPerLevel[2] << ", "; // 76
+                myfile << spellEntry->EffectBasePoints[0] << ", "; // 77
+                myfile << spellEntry->EffectBasePoints[1] << ", "; // 78
+                myfile << spellEntry->EffectBasePoints[2] << ", "; // 79
+                myfile << spellEntry->EffectMechanic[0] << ", "; // 80
+                myfile << spellEntry->EffectMechanic[1] << ", "; // 81
+                myfile << spellEntry->EffectMechanic[2] << ", "; // 82
+                myfile << spellEntry->EffectImplicitTargetA[0] << ", "; // 83
+                myfile << spellEntry->EffectImplicitTargetA[1] << ", "; // 84
+                myfile << spellEntry->EffectImplicitTargetA[2] << ", "; // 85
+                myfile << spellEntry->EffectImplicitTargetB[0] << ", "; // 86
+                myfile << spellEntry->EffectImplicitTargetB[1] << ", "; // 87
+                myfile << spellEntry->EffectImplicitTargetB[2] << ", "; // 88
+                myfile << spellEntry->EffectRadiusIndex[0] << ", "; // 89
+                myfile << spellEntry->EffectRadiusIndex[1] << ", "; // 90
+                myfile << spellEntry->EffectRadiusIndex[2] << ", "; // 91
+                myfile << spellEntry->EffectApplyAuraName[0] << ", "; // 92
+                myfile << spellEntry->EffectApplyAuraName[1] << ", "; // 93
+                myfile << spellEntry->EffectApplyAuraName[2] << ", "; // 94
+                myfile << spellEntry->EffectAmplitude[0] << ", "; // 95
+                myfile << spellEntry->EffectAmplitude[1] << ", "; // 96
+                myfile << spellEntry->EffectAmplitude[2] << ", "; // 97
+                myfile << spellEntry->EffectMultipleValue[0] << ", "; // 98
+                myfile << spellEntry->EffectMultipleValue[1] << ", "; // 99
+                myfile << spellEntry->EffectMultipleValue[2] << ", "; // 100
+                myfile << spellEntry->EffectChainTarget[0] << ", "; // 101
+                myfile << spellEntry->EffectChainTarget[1] << ", "; // 102
+                myfile << spellEntry->EffectChainTarget[2] << ", "; // 103
+                myfile << spellEntry->EffectItemType[0] << ", "; // 104
+                myfile << spellEntry->EffectItemType[1] << ", "; // 105
+                myfile << spellEntry->EffectItemType[2] << ", "; // 106
+                myfile << spellEntry->EffectMiscValue[0] << ", "; // 107
+                myfile << spellEntry->EffectMiscValue[1] << ", "; // 108
+                myfile << spellEntry->EffectMiscValue[2] << ", "; // 109
+                myfile << spellEntry->EffectTriggerSpell[0] << ", "; // 110
+                myfile << spellEntry->EffectTriggerSpell[1] << ", "; // 111
+                myfile << spellEntry->EffectTriggerSpell[2] << ", "; // 112
+                myfile << spellEntry->EffectPointsPerComboPoint[0] << ", "; // 113
+                myfile << spellEntry->EffectPointsPerComboPoint[1] << ", "; // 114
+                myfile << spellEntry->EffectPointsPerComboPoint[2] << ", "; // 115
+                myfile << spellEntry->SpellVisual << ", "; // 116
+                myfile << spellEntry->SpellVisual2 << ", "; // 117
+                myfile << spellEntry->SpellIconID << ", "; // 118
+                myfile << spellEntry->activeIconID << ", "; // 119
+                myfile << spellEntry->spellPriority << ", "; // 120
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[0])) << "', "; // 121
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[1])) << "', "; // 122
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[2])) << "', "; // 123
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[3])) << "', "; // 124
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[4])) << "', "; // 125
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[5])) << "', "; // 126
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[6])) << "', "; // 127
+                myfile << "'" << ReplaceString(std::string(spellEntry->SpellName[7])) << "', "; // 128
+                myfile << spellEntry->SpellNameFlag << ", "; // 129
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[0])) << "', "; // 130
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[1])) << "', "; // 131
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[2])) << "', "; // 132
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[3])) << "', "; // 133
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[4])) << "', "; // 134
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[5])) << "', "; // 135
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[6])) << "', "; // 136
+                myfile << "'" << ReplaceString(std::string(spellEntry->Rank[7])) << "', "; // 137
+                myfile << spellEntry->RankFlags << ", "; // 138
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[0])) << "', "; // 139
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[1])) << "', "; // 140
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[2])) << "', "; // 141
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[3])) << "', "; // 142
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[4])) << "', "; // 143
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[5])) << "', "; // 144
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[6])) << "', "; // 145
+                myfile << "'" << ReplaceString(std::string(spellEntry->Description[7])) << "', "; // 146
+                myfile << spellEntry->DescriptionFlags << ", "; // 147
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[0])) << "', "; // 148
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[1])) << "', "; // 149
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[2])) << "', "; // 150
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[3])) << "', "; // 151
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[4])) << "', "; // 152
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[5])) << "', "; // 153
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[6])) << "', "; // 154
+                myfile << "'" << ReplaceString(std::string(spellEntry->ToolTip[7])) << "', "; // 155
+                myfile << spellEntry->ToolTipFlags << ", "; // 156
+                myfile << spellEntry->ManaCostPercentage << ", "; // 157
+                myfile << spellEntry->StartRecoveryCategory << ", "; // 158
+                myfile << spellEntry->StartRecoveryTime << ", "; // 159
+                myfile << spellEntry->MaxTargetLevel << ", "; // 160
+                myfile << spellEntry->SpellFamilyName << ", "; // 161
+                myfile << spellEntry->SpellFamilyFlags.Flags << ", "; // 162
+                myfile << spellEntry->MaxAffectedTargets << ", "; // 163
+                myfile << spellEntry->DmgClass << ", "; // 164
+                myfile << spellEntry->PreventionType << ", "; // 165
+                myfile << spellEntry->StanceBarOrder << ", "; // 166
+                myfile << spellEntry->DmgMultiplier[0] << ", "; // 167
+                myfile << spellEntry->DmgMultiplier[1] << ", "; // 168
+                myfile << spellEntry->DmgMultiplier[2] << ", "; // 169
+                myfile << spellEntry->MinFactionId << ", "; // 170
+                myfile << spellEntry->MinReputation << ", "; // 171
+                myfile << spellEntry->RequiredAuraVision << ");\n"; // 172
+
             }
-            mSpellEntryMap[i] = newSpell;
         }
+        myfile.close();
     }
-    sLog.outString("%u spells loaded in %ums.", mSpellEntryMap.size(), WorldTimer::getMSTimeDiffToNow(oldMSTime));
+    sLog.outString("Finished spells extraction.");
+
+    system("pause");
+
+    World::StopNow(SHUTDOWN_EXIT_CODE);
+    exit(0);
 }
