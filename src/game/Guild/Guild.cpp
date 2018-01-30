@@ -168,7 +168,14 @@ bool Guild::Create(Player* leader, std::string gname)
     CharacterDatabase.PExecute("INSERT INTO guild (guildid,name,leaderguid,info,motd,createdate,EmblemStyle,EmblemColor,BorderStyle,BorderColor,BackgroundColor) "
                                "VALUES('%u','%s','%u', '%s', '%s','" UI64FMTD "','%u','%u','%u','%u','%u')",
                                m_Id, gname.c_str(), m_LeaderGuid.GetCounter(), dbGINFO.c_str(), dbMOTD.c_str(), uint64(now), m_EmblemStyle, m_EmblemColor, m_BorderStyle, m_BorderColor, m_BackgroundColor);
-    CharacterDatabase.CommitTransaction();
+//******************************************************************************************************************************************************************************************************
+	//ientium@sina.com 小脏手修改 公会扩展表创立
+	CharacterDatabase.PExecute("INSERT INTO guild_exinfo (guildid,guildbank,guildclass,guildlevel,guildlvtime,guildXP,mcnum,bwlnum,taqnum,naxxnum) "
+		"VALUES('%u','%u','%u', '%u','" UI64FMTD "','%u','%u','%u','%u','%u')",
+		m_Id, 0, leader->GetTeamId(),1, uint64(now),0,0,0, 0,0);
+
+//********************************************************************************************************************************************************************************
+	CharacterDatabase.CommitTransaction();
 
     CreateDefaultGuildRanks(lSession->GetSessionDbLocaleIndex());
 
@@ -285,7 +292,19 @@ void Guild::SetGINFO(std::string ginfo)
     CharacterDatabase.escape_string(ginfo);
     CharacterDatabase.PExecute("UPDATE guild SET info='%s' WHERE guildid='%u'", ginfo.c_str(), m_Id);
 }
+//******************************************************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//获取公会自定义扩展信息
 
+bool Guild::LoadGuildExInfoFromDB(QueryResult *guildDataResult)
+{
+	if (!guildDataResult)
+		return false;
+
+	Field *fields = guildDataResult->Fetch();
+	m_level = fields[3].GetUInt32();
+}
+//******************************************************************************************************************************************************************************
 bool Guild::LoadGuildFromDB(QueryResult *guildDataResult)
 {
     if (!guildDataResult)
@@ -725,6 +744,10 @@ void Guild::Disband()
 
     CharacterDatabase.BeginTransaction();
     CharacterDatabase.PExecute("DELETE FROM guild WHERE guildid = '%u'", m_Id);
+//**********************************************************************************************************************************************************************
+//	ientium@sina.com  小脏手修改 删除公会扩展信息表
+ 	CharacterDatabase.PExecute("DELETE FROM guild_exinfo WHERE guildid = '%u'", m_Id);
+//***********************************************************************************************************************************************************************
     CharacterDatabase.PExecute("DELETE FROM guild_rank WHERE guildid = '%u'", m_Id);
     CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE guildid = '%u'", m_Id);
     CharacterDatabase.CommitTransaction();

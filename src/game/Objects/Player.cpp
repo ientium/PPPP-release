@@ -16188,7 +16188,7 @@ void Player::_SaveEXMemberInfo()
 	UpdateEXInfo();
 
 	SqlStatement stmtDel = CharacterDatabase.CreateStatement(delVIPInfo, "DELETE FROM character_exinfo WHERE guid = ?");
-	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime) VALUES (?, ?, ?, ?, ?)");
+	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime,guild_reputation,guildtime,talenttime) VALUES (?, ?, ?, ?, ?,?,?,?)");
 
 	stmtDel.PExecute(GetGUIDLow());
 	stmtIns.addUInt32(GetGUIDLow());
@@ -16208,6 +16208,9 @@ void Player::_SaveEXMemberInfo()
 		stmtIns.addUInt32(0);
 		stmtIns.addUInt32(0);
 	}
+	stmtIns.addUInt32(memberEXInfo.guild_reputation);
+	stmtIns.addUInt32(memberEXInfo.guildtime);
+	stmtIns.addUInt32(memberEXInfo.talenttime);
 	stmtIns.Execute();
 }
 //********************************************************************************************************************************
@@ -17400,15 +17403,26 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
 		return false;
 	}
 	else{
+		if (memberEXInfo.activateTaxiTime >= time(NULL))
+		{
+			TaxiNodesEntry const* lastnode = sTaxiNodesStore.LookupEntry(nodes[nodes.size() - 1]);
+			m_taxi.ClearTaxiDestinations();
+			TeleportTo(lastnode->map_id, lastnode->x, lastnode->y, lastnode->z, GetOrientation());
+			return false;
+		}
+		else {
+			WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
+			data << uint32(ERR_TAXIOK);
+			GetSession()->SendPacket(&data);
+			DEBUG_LOG("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
+			GetSession()->SendDoFlight(mount_display_id, sourcepath);
 		
+		
+		}
 
 		
 
-		WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
-		data << uint32(ERR_TAXIOK);
-		GetSession()->SendPacket(&data);
-		DEBUG_LOG("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
-		GetSession()->SendDoFlight(mount_display_id, sourcepath);
+		
 	}
     
 //********************************************************************************************************************************

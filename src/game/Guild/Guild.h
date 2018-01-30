@@ -249,7 +249,10 @@ class Guild
 
         uint32 GetMemberSize() const { return members.size(); }
         uint32 GetAccountsNumber();
-
+//*************************************************************************************************************************************************************************
+		//ientium@sina.com 小脏手修改
+		bool LoadGuildExInfoFromDB(QueryResult* result);
+//*************************************************************************************************************************************************************************
         bool LoadGuildFromDB(QueryResult *guildDataResult);
         bool CheckGuildStructure();
         bool LoadRanksFromDB(QueryResult *guildRanksResult);
@@ -339,7 +342,10 @@ class Guild
         RankList m_Ranks;
 
         MemberList members;
-
+		//*************************************************************************************************************************************************************************
+		//ientium@sina.com 小脏手修改
+		uint32 m_level;     //公会等级
+		//*************************************************************************************************************************************************************************
         /** These are actually ordered lists. The first element is the oldest entry.*/
         typedef std::list<GuildEventLogEntry> GuildEventLog;
         GuildEventLog m_GuildEventLog;

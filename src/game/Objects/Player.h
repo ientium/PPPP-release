@@ -618,7 +618,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,
     PLAYER_LOGIN_QUERY_BATTLEGROUND_DATA,
 //********************************************************************************************************************************
-// ½ÇÉ«À©Õ¹ĞÅÏ¢ÔØÈë  ientium@sina.com Ğ¡ÔàÊÖ
+// è§’è‰²æ‰©å±•ä¿¡æ¯è½½å…¥  ientium@sina.com å°è„æ‰‹
 	PLAYER_LOGIN_QUERY_LOADEXINFO,
 
 	//********************************************************************************************************************************
@@ -737,23 +737,23 @@ class MANGOS_DLL_SPEC PlayerTaxi
 std::ostringstream& operator<< (std::ostringstream& ss, PlayerTaxi const& taxi);
 
 //***********************************************************************************************************************************
-//ientium@sina.com Ğ¡ÔàÊÖĞŞ¸Ä
-//ÓÃ»§À©Õ¹ĞÅÏ¢
+//ientium@sina.com å°è„æ‰‹ä¿®æ”¹
+//ç”¨æˆ·æ‰©å±•ä¿¡æ¯
 
 struct MemberEXInfo
 {
 	MemberEXInfo() : vipcoin(0), generalcoin(0), activateTaxiTime(0), totaltime(0), costvipcoin(0), costgeneralcoin(0), lastupdate(0), multiplyingexp(1), guild_reputation(0), guildtime(0), talenttime(0){}
-	uint32 vipcoin;            //¸ß¼¶VIPµãÊı
-	uint32 generalcoin;			//ÆÕÍ¨VIPµãÊı
-	uint32 activateTaxiTime;  //Ë²·Éµ½ÆÚÊ±¼ä
-	uint32 totaltime;      //Ê£Óà×ª»»Ê±¼ä
-	int32 costvipcoin;  //»¨·ÑµÄvipcion
-	int32 costgeneralcoin; //»¨·ÑµÄÆÕÍ¨generalcoin
-	uint32 lastupdate;//×îºó²éÑ¯Ê±¼ä
-	int32 multiplyingexp; //¾­Ñé±¶ÂÊ
-	int32 guild_reputation;//¹«»áÉùÍû
-	uint32 guildtime;  //¼ÓÈë¹«»áÈÕÆÚ
-	uint32 talenttime;// Ìì¸³µ½ÆÚÊ±¼ä
+	uint32 vipcoin;            //é«˜çº§VIPç‚¹æ•°
+	uint32 generalcoin;			//æ™®é€šVIPç‚¹æ•°
+	uint32 activateTaxiTime;  //ç¬é£åˆ°æœŸæ—¶é—´
+	uint32 totaltime;      //å‰©ä½™è½¬æ¢æ—¶é—´
+	int32 costvipcoin;  //èŠ±è´¹çš„vipcion
+	int32 costgeneralcoin; //èŠ±è´¹çš„æ™®é€šgeneralcoin
+	uint32 lastupdate;//æœ€åæŸ¥è¯¢æ—¶é—´
+	int32 multiplyingexp; //ç»éªŒå€ç‡
+	int32 guild_reputation;//å…¬ä¼šå£°æœ›
+	uint32 guildtime;  //åŠ å…¥å…¬ä¼šæ—¥æœŸ
+	uint32 talenttime;// å¤©èµ‹åˆ°æœŸæ—¶é—´
 };
 //***********************************************************************************************************************************
 
@@ -946,7 +946,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
             m_summon_z = z;
         }
 		//**********************************************************************************************************************************		
-		//ientium@sina.com Ğ¡ÔàÊÖĞŞ¸Ä
+		//ientium@sina.com å°è„æ‰‹ä¿®æ”¹
 		/*********************************************************/
 		/***                  VIP SYSTEM                     ***/
 		/*********************************************************/
@@ -955,13 +955,13 @@ class MANGOS_DLL_SPEC Player final: public Unit
 
 		uint32 getVipInfo(int uType = -1);
 		uint32 setVipMemberCoin(uint32 coins);
-		uint32 getVipInfoTimeToCoin();  //»ñÈ¡Î´×ª»¯VIP»ı·ÖµÄÊ±¼ä
-		uint16 costVipCoin(uint16 uType, uint32 t_coin); //»¨·Ñ»ı·Öµãº¯Êı
+		uint32 getVipInfoTimeToCoin();  //è·å–æœªè½¬åŒ–VIPç§¯åˆ†çš„æ—¶é—´
+		uint16 costVipCoin(uint16 uType, uint32 t_coin); //èŠ±è´¹ç§¯åˆ†ç‚¹å‡½æ•°
 		uint16 setUpdateVIPFlyingTime(uint32 timetamp, uint32 coin);
 		uint16 GetInfoLevel();
-		bool LevelUp(uint16 newlevel, uint32 costcoin);//ÌáÉıÓÃ»§µÈ¼¶
+		bool LevelUp(uint16 newlevel, uint32 costcoin);//æå‡ç”¨æˆ·ç­‰çº§
 
-		bool UpdateEXInfo();  //¸üĞÂ²éÑ¯ĞÅÏ¢  
+		bool UpdateEXInfo();  //æ›´æ–°æŸ¥è¯¢ä¿¡æ¯  
 //**********************************************************************************************************************************
 		void SummonIfPossible(bool agree);
 
@@ -1273,14 +1273,14 @@ class MANGOS_DLL_SPEC Player final: public Unit
         uint32 m_stableSlots;
 
 //********************************************************************************************************************************
-//ientium@sina.com Ğ¡ÔàÊÖĞŞ¸Ä
+//ientium@sina.com å°è„æ‰‹ä¿®æ”¹
 /*********************************************************/
-/***                    EXInfoĞÅÏ¢                    ***/
+/***                    EXInfoä¿¡æ¯                    ***/
 /*********************************************************/
 
-// ÔØÈë EXInfo ±íĞÅÏ¢
+// è½½å…¥ EXInfo è¡¨ä¿¡æ¯
 		void Player::_LoadEXInfo(QueryResult* result);
-		//              ÓÃ»§VIP±í±£´æ                 ***/
+		//              ç”¨æˆ·VIPè¡¨ä¿å­˜                 ***/
 
 		void _SaveEXMemberInfo();
 //********************************************************************************************************************************
@@ -1613,8 +1613,21 @@ class MANGOS_DLL_SPEC Player final: public Unit
         static void RemoveFromGroup(Group* group, ObjectGuid guid);
         void RemoveFromGroup() { RemoveFromGroup(GetGroup(), GetObjectGuid()); }
         void SendUpdateToOutOfRangeGroupMembers();
-
-        void SetInGuild(uint32 GuildId) { SetUInt32Value(PLAYER_GUILDID, GuildId); }
+//***************************************************************************************************************************************************************************
+//   ientium@sina.com å°è„æ‰‹ä¿®æ”¹
+//		è®¾ç½®è§’è‰²å…¬ä¼šä¿¡æ¯å€¼
+        void SetInGuild(uint32 GuildId) { 
+			if (GuildId > 0) {
+				//åŠ å…¥å…¬ä¼šæ—¶é—´
+				memberEXInfo.guildtime = time(NULL);
+			}
+			else {
+				memberEXInfo.guildtime = 0;
+			}
+			memberEXInfo.guild_reputation = 0;   //åŠ å…¥ä¸é€€å‡ºå…¬ä¼šè´¡çŒ®å€¼éƒ½æ¸…é›¶
+			SetUInt32Value(PLAYER_GUILDID, GuildId);
+		}
+//***************************************************************************************************************************************************************************
         void SetRank(uint32 rankId){ SetUInt32Value(PLAYER_GUILDRANK, rankId); }
         void SetGuildIdInvited(uint32 GuildId) { m_GuildIdInvited = GuildId; }
         uint32 GetGuildId() const { return GetUInt32Value(PLAYER_GUILDID);  }

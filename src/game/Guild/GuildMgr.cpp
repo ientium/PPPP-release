@@ -120,7 +120,12 @@ void GuildMgr::LoadGuilds()
         sLog.outString(">> Loaded %u guild definitions", count);
         return;
     }
-
+//****************************************************************************************************************************************************************************
+	//ientium@sina.com 小脏手 公会扩展表信息                            0        1        2         3            4         5       6     7
+	QueryResult *guildExInforesult = CharacterDatabase.Query("SELECT guildid,guildbank,guildclass,guildlevel,guildlvtime,guildXP,mcnum,bwlnum,"
+		//  8     9    
+		"taqnum,naxxnum FROM guild_exinfo ORDER BY guildid ASC");
+//****************************************************************************************************************************************************************************
     // load guild ranks
     //                                                                0       1   2     3
     QueryResult *guildRanksResult   = CharacterDatabase.Query("SELECT guildid,rid,rname,rights FROM guild_rank ORDER BY guildid ASC, rid ASC");
@@ -144,7 +149,12 @@ void GuildMgr::LoadGuilds()
         Guild *newGuild = new Guild;
         if (!newGuild->LoadGuildFromDB(result) ||
                 !newGuild->LoadRanksFromDB(guildRanksResult) ||
-                !newGuild->LoadMembersFromDB(guildMembersResult) ||
+				!newGuild->LoadMembersFromDB(guildMembersResult) ||
+//******************************************************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//获取公会自定义扩展信息
+				!newGuild->LoadGuildExInfoFromDB(guildExInforesult) ||
+//******************************************************************************************************************************************************************************
                 !newGuild->CheckGuildStructure()
            )
         {
