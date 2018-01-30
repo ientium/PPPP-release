@@ -4078,6 +4078,12 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
 
     holder->ApplyAuraModifiers(true, true);
     DEBUG_LOG("Holder of spell %u now is in use", holder->GetId());
+//*****************************************************************************************************************************************************************************
+	//ientium@sina.com 小脏手
+	//添加自定义技能效果
+	//DEBUG_LOG("PLAYER: %u ===================================>: %u", holder->GetId(), holder->GetCasterGuid());
+	AddCustomSpellAuras(holder);
+//*****************************************************************************************************************************************************************************
 
     // if aura deleted before boosts apply ignore
     // this can be possible it it removed indirectly by triggered spell effect at ApplyModifier
@@ -4711,7 +4717,11 @@ void Unit::RemoveSpellAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mode)
     }
 
     holder->_RemoveSpellAuraHolder();
-
+//*********************************************************************************************************************************************************************************	
+	//ientium@sina.com 小脏手
+	//删除自定义光环效果
+	RemoveCustomSpellAuras(holder);
+//*********************************************************************************************************************************************************************************
     if (mode != AURA_REMOVE_BY_DELETE)
         holder->HandleSpellSpecificBoosts(false);
 

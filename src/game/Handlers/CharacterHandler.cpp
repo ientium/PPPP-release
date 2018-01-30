@@ -111,9 +111,9 @@ bool LoginQueryHolder::Initialize()
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILS,           "SELECT id,messageType,sender,receiver,subject,itemTextId,expire_time,deliver_time,money,cod,checked,stationery,mailTemplateId,has_items FROM mail WHERE receiver = '%u' ORDER BY id DESC", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,     "SELECT creatorGuid, giftCreatorGuid, count, duration, charges, flags, enchantments, randomPropertyId, durability, text, mail_id, item_guid, itemEntry, generated_loot FROM mail_items JOIN item_instance ON item_guid = guid WHERE receiver = '%u'", m_guid.GetCounter());
 //********************************************************************************************************************************
-// Ω«…´¿©’π–≈œ¢‘ÿ»Î  ientium@sina.com –°‘‡ ÷
+// ËßíËâ≤Êâ©Â±ï‰ø°ÊÅØËΩΩÂÖ•  ientium@sina.com Â∞èËÑèÊâã
 
-	res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADEXINFO, "SELECT vipcoin, generalcoin, activateTaxiTime, totaltime,guild_reputation,guildtime,talenttime FROM character_character_exinfo WHERE guid = '%u'", m_guid.GetCounter());
+	res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADEXINFO, "SELECT vipcoin, generalcoin, activateTaxiTime, totaltime,guild_reputation,guildtime,talenttime FROM character_exinfo WHERE guid = '%u'", m_guid.GetCounter());
 
     return res;
 }

@@ -15114,6 +15114,8 @@ void Player::_LoadEXInfo(QueryResult* result)
 		memberEXInfo.totaltime = fields[3].GetUInt32();
 		memberEXInfo.guild_reputation = fields[4].GetUInt32(); //公会声望
 		memberEXInfo.guildtime = fields[5].GetUInt32(); //加入公会日期
+		memberEXInfo.talenttime= fields[6].GetUInt32(); //天赋到期日期
+		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costgeneralcoin = 0;
 
