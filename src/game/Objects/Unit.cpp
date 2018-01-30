@@ -11699,3 +11699,54 @@ void Unit::InitPlayerDisplayIds()
     }
 
 }
+//**********************************************************************************************************************************
+//自定义Buff添加
+void Unit::AddCustomSpellAuras(SpellAuraHolder *holder) {
+	//Unit* pCaster = Aur->GetCaster();
+	//DEBUG_LOG("Holder of spell %u now is in use", holder->GetId());
+	Player* pCaster = (holder->GetCaster())->ToPlayer();      //卷轴目标
+
+	switch (holder->GetId())
+	{
+	case 35004: //双倍经验卷轴
+
+		pCaster->memberEXInfo.multiplyingexp = 2;   //倍率恢复为2
+
+		break;
+	case 35005: //双倍经验卷轴
+
+		
+		pCaster->memberEXInfo.multiplyingexp = 2;   //倍率恢复为2
+
+		break;
+
+	}
+
+}
+//自定义Buff添加
+void Unit::RemoveCustomSpellAuras(SpellAuraHolder *holder) {
+	//Unit* pCaster = Aur->GetCaster();
+	//DEBUG_LOG("Holder of spell %u now is in use", holder->GetId());
+	Player* pCaster = (holder->GetCaster())->ToPlayer();      //卷轴目标
+
+	switch (holder->GetId())
+	{
+	case 35004: //双倍经验卷轴
+
+
+
+		pCaster->memberEXInfo.multiplyingexp = 1;   //倍率恢复为2
+
+		break;
+	case 35005: //双倍经验卷轴
+
+		
+
+		pCaster->memberEXInfo.multiplyingexp = 1;   //倍率恢复为2
+
+		break;
+
+	}
+
+}
+

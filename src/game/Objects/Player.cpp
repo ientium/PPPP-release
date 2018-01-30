@@ -1312,6 +1312,13 @@ void Player::Update(uint32 update_diff, uint32 p_time)
         uint32 elapsed = uint32(now - m_Last_tick);
         m_Played_time[PLAYED_TIME_TOTAL] += elapsed;        // Total played time
         m_Played_time[PLAYED_TIME_LEVEL] += elapsed;        // Level played time
+//**********************************************************************************************************************************		
+		//ientium@sina.com 小脏手修改
+		//VIPInfo 如果角色为最高级。每秒实时添加在线时间
+		if (GetUInt32Value(UNIT_FIELD_LEVEL) >= DEFAULT_MAX_LEVEL) {
+			memberEXInfo.totaltime += elapsed;
+		}
+//**********************************************************************************************************************************
         m_Last_tick = now;
     }
 
@@ -2691,7 +2698,12 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 
     // XP resting bonus for kill
     uint32 rested_bonus_xp = victim ? GetXPRestBonus(xp) : 0;
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手 
+//加入经验倍率计算
+	xp = xp * memberEXInfo.multiplyingexp;
 
+//********************************************************************************************************************************
     SendLogXPGain(xp, victim, rested_bonus_xp);
 
     uint32 curXP = GetUInt32Value(PLAYER_XP);
@@ -4386,7 +4398,12 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
             CharacterDatabase.PExecute("DELETE FROM mail_items WHERE receiver = '%u'", lowguid);
             CharacterDatabase.PExecute("DELETE FROM character_pet WHERE owner = '%u'", lowguid);
             CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u' OR PlayerGuid2 = '%u'", lowguid, lowguid);
-            CharacterDatabase.CommitTransaction();
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//角色删除时删除相应的扩展信息表数据
+			CharacterDatabase.PExecute("DELETE FROM character_exinfo WHERE guid = '%u'", lowguid);
+//********************************************************************************************************************************
+			CharacterDatabase.CommitTransaction();
             break;
         }
         // The character gets unlinked from the account, the name gets freed up and appears as deleted ingame
@@ -14768,7 +14785,18 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
     // has to be called after last Relocate() in Player::LoadFromDB
     SetFallInformation(0, GetPositionZ());
 
-    _LoadSpellCooldowns(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSPELLCOOLDOWNS));
+//********************************************************************************************************************************
+	//ientium@sina.com 小脏手修改
+	//载入VIPInfo信息表
+	_LoadEXInfo(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEXINFO));
+	
+//********************************************************************************************************************************	
+	_LoadSpellCooldowns(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSPELLCOOLDOWNS));
+
+
+
+
+
 
     // Spell code allow apply any auras to dead character in load time in aura/spell/item loading
     // Do now before stats re-calculation cleanup for ghost state unexpected auras
@@ -15062,6 +15090,36 @@ void Player::LoadCorpse()
         }
     }
 }
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+// 载入 EXInfo 表信息
+void Player::_LoadEXInfo(QueryResult* result)
+{
+	if (!result)
+	{
+
+		return;
+	}
+	else {
+		Field* fields = result->Fetch();
+		memberEXInfo.vipcoin = fields[0].GetUInt32();
+		memberEXInfo.generalcoin = fields[1].GetUInt32();
+		if ((time_t)fields[2].GetUInt32() > time(NULL)) {
+			memberEXInfo.activateTaxiTime = fields[2].GetUInt32();
+		}
+		else {
+			memberEXInfo.activateTaxiTime = 0;
+		}
+
+		memberEXInfo.totaltime = fields[3].GetUInt32();
+		memberEXInfo.guild_reputation = fields[4].GetUInt32(); //公会声望
+		memberEXInfo.guildtime = fields[5].GetUInt32(); //加入公会日期
+		memberEXInfo.costvipcoin = 0;
+		memberEXInfo.costgeneralcoin = 0;
+
+	}
+}
+//********************************************************************************************************************************
 
 void Player::_LoadInventory(QueryResult *result, uint32 timediff)
 {
@@ -15968,7 +16026,11 @@ void Player::SaveToDB(bool online, bool force)
     _SaveSkills();
     m_reputationMgr.SaveToDB();
     m_honorMgr.Save();
-
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//保存EX的表信息
+	_SaveEXMemberInfo();
+//********************************************************************************************************************************
     // Systeme de phasing
     sObjectMgr.SetPlayerWorldMask(GetGUIDLow(), GetWorldMask());
     GetSession()->SaveTutorialsData();                      // changed only while character in game
@@ -16108,6 +16170,45 @@ bool Player::SaveAura(SpellAuraHolder* holder, AuraSaveStruct& saveStruct)
     }
     return false;
 }
+
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//EXInfo表保存函数
+// save player exinfo
+// 
+void Player::_SaveEXMemberInfo()
+{
+
+	static SqlStatementID delVIPInfo;
+	static SqlStatementID insVIPInfo;
+
+
+	UpdateEXInfo();
+
+	SqlStatement stmtDel = CharacterDatabase.CreateStatement(delVIPInfo, "DELETE FROM character_exinfo WHERE guid = ?");
+	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime) VALUES (?, ?, ?, ?, ?)");
+
+	stmtDel.PExecute(GetGUIDLow());
+	stmtIns.addUInt32(GetGUIDLow());
+	stmtIns.addUInt32(memberEXInfo.vipcoin);
+	if (memberEXInfo.activateTaxiTime > time(NULL)) {
+		stmtIns.addUInt32(memberEXInfo.activateTaxiTime);
+	}
+	else {
+		stmtIns.addUInt32(0);
+	}
+
+	if (getLevel() >= 60) {
+		stmtIns.addUInt32(memberEXInfo.generalcoin);
+		stmtIns.addUInt32(memberEXInfo.totaltime);
+	}
+	else {
+		stmtIns.addUInt32(0);
+		stmtIns.addUInt32(0);
+	}
+	stmtIns.Execute();
+}
+//********************************************************************************************************************************
 
 void Player::_SaveInventory()
 {
@@ -17280,18 +17381,35 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
     RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
     // reset extraAttacks counter
-    ResetExtraAttacks();
+    
+	ResetExtraAttacks();
+	UnsummonPetTemporaryIfAny();
+//********************************************************************************************************************************
+// 瞬飞修改  ientium@sina.com 小脏手
+	
 
-    UnsummonPetTemporaryIfAny();
 
-    WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
-    data << uint32(ERR_TAXIOK);
-    GetSession()->SendPacket(&data);
 
-    DEBUG_LOG("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
+	if (sWorld.getConfig(CONFIG_BOLL_INSTANT_TAXI))
+	{
+		TaxiNodesEntry const* lastnode = sTaxiNodesStore.LookupEntry(nodes[nodes.size() - 1]);
+		m_taxi.ClearTaxiDestinations();
+		TeleportTo(lastnode->map_id, lastnode->x, lastnode->y, lastnode->z, GetOrientation());
+		return false;
+	}
+	else{
+		
 
-    GetSession()->SendDoFlight(mount_display_id, sourcepath);
+		
 
+		WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
+		data << uint32(ERR_TAXIOK);
+		GetSession()->SendPacket(&data);
+		DEBUG_LOG("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
+		GetSession()->SendDoFlight(mount_display_id, sourcepath);
+	}
+    
+//********************************************************************************************************************************
     return true;
 }
 
@@ -20848,4 +20966,223 @@ void Player::CreatePacketBroadcaster()
     // Register player packet queue with the packet broadcaster
     m_broadcaster = std::make_shared<PlayerBroadcaster>(m_session->GetSocket(), GetObjectGuid());
     sWorld.GetBroadcaster()->RegisterPlayer(m_broadcaster);
+}
+//**********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//获取积分数据
+//******************************************************************************************
+// utype=0 为总coin 1为赠送coin
+//******************************************************************************************
+uint32 Player::getVipInfo(int uType)
+{
+	if (time(NULL) - memberEXInfo.lastupdate >= 30) {
+		UpdateEXInfo();
+	}
+
+	switch (uType)
+	{
+	case 0:                                // vipcoin
+										   //memberEXInfo.vipcoin= memberEXInfo.vipcoin + fields[0].GetUInt32();
+		return memberEXInfo.vipcoin;
+
+
+		break;
+	case 1:                                // generalcoin
+		return memberEXInfo.generalcoin;
+
+		break;
+
+	case 2:                                // activateTaxiTime 瞬飞到期时间
+
+		return  memberEXInfo.activateTaxiTime;
+		break;
+
+	case 3: // 未转换在线时间
+
+		return  memberEXInfo.totaltime;
+		break;
+
+	case -1: // 充值VIP积分和时间VIP积分的和
+
+		DEBUG_LOG("WORLD: 设定VIP时长 111");
+		return  memberEXInfo.vipcoin + memberEXInfo.generalcoin;
+		break;
+	}
+
+}
+
+
+
+//60级才能获取积分,每2小时转化1点，7200秒 
+uint32 Player::setVipMemberCoin(uint32 coins) {
+
+	if (coins < 0 || coins > 999999)
+	{
+
+		return -1;
+	}
+	DEBUG_LOG("WORLD: 设定VIP时长 %d", coins);
+	if (getLevel() >= DEFAULT_MAX_LEVEL) {
+		uint32 vcoin = memberEXInfo.totaltime / coins;
+		memberEXInfo.generalcoin = memberEXInfo.generalcoin + vcoin;                    //计算出获得几个积分
+		memberEXInfo.costgeneralcoin = memberEXInfo.costgeneralcoin - vcoin;
+
+		memberEXInfo.totaltime = memberEXInfo.totaltime - vcoin*coins; 				 //更新普通积分数值
+
+		return 1;
+
+
+
+	}
+	else {
+		return 0;
+	}
+
+}
+//更新VIP瞬飞时间，默认2592000秒 =30天
+uint16 Player::setUpdateVIPFlyingTime(uint32 timetamp, uint32 coin)
+{
+
+
+	if (timetamp == 0)
+	{
+
+		return true;
+	}
+	uint16 t_Flag = costVipCoin(2, coin);
+
+	DEBUG_LOG("WORLD: ==================%d", timetamp);
+
+	if (t_Flag == 1) {
+		if (memberEXInfo.activateTaxiTime > 0) {
+			memberEXInfo.activateTaxiTime = memberEXInfo.activateTaxiTime + timetamp;
+		}
+		else {
+			memberEXInfo.activateTaxiTime = time(NULL) + timetamp;
+		}
+
+	}
+	return t_Flag;
+
+
+
+
+}
+//返回未转换的在线时间
+uint32 Player::getVipInfoTimeToCoin() {
+
+	if (getLevel() >= DEFAULT_MAX_LEVEL) {
+
+		return memberEXInfo.totaltime;
+
+
+	}
+	else {
+		return 0;
+	}
+
+}
+//花费积分点函数
+//参数1 充值积分|普通积分|全部积分，参数2积分数
+//返回 状态值 1 完成， 2 高级技能点不足，3普通技能点不足，4技能点不足,5等级不够
+uint16 Player::costVipCoin(uint16 uType, uint32 t_coin)
+{
+	//判断是否够积分
+	if (time(NULL) - memberEXInfo.lastupdate >= 30) {
+		UpdateEXInfo();
+	}
+	switch (uType)
+	{
+	case 0:                                // vipcoin
+		if (memberEXInfo.vipcoin < t_coin) {
+			return  2;
+		}
+		else {
+			memberEXInfo.vipcoin = memberEXInfo.vipcoin - t_coin;
+			memberEXInfo.costvipcoin = memberEXInfo.costvipcoin + t_coin;
+			return  1;
+		}
+
+		break;
+	case 1:                                // generalcoin
+		if (getLevel()<DEFAULT_MAX_LEVEL) {
+			return  5;
+		}
+		else if (memberEXInfo.generalcoin < t_coin) {
+			return  3;
+		}
+		else {
+
+			memberEXInfo.generalcoin = memberEXInfo.generalcoin - t_coin;
+			memberEXInfo.costgeneralcoin = memberEXInfo.costgeneralcoin + t_coin;
+			return  1;
+		}
+		break;
+
+	case 2:
+		if ((memberEXInfo.generalcoin + memberEXInfo.vipcoin)< t_coin) {
+			return  4;
+		}
+		else {
+
+			if (memberEXInfo.generalcoin >= t_coin) {
+				memberEXInfo.generalcoin = memberEXInfo.generalcoin - t_coin;
+				memberEXInfo.costgeneralcoin = memberEXInfo.costgeneralcoin + t_coin;
+			}
+			else {
+				memberEXInfo.costvipcoin = memberEXInfo.costvipcoin + (t_coin - memberEXInfo.generalcoin);
+				memberEXInfo.vipcoin = memberEXInfo.vipcoin - memberEXInfo.costvipcoin;
+				memberEXInfo.costgeneralcoin = memberEXInfo.costgeneralcoin + memberEXInfo.generalcoin;
+				memberEXInfo.generalcoin = 0;
+
+
+			}
+			DEBUG_LOG("用户的哈佛点数是%d，已升级", memberEXInfo.costvipcoin);
+			return  1;
+		}
+		break;
+
+
+	}
+
+}
+//获得用户等级
+uint16 Player::GetInfoLevel() {
+
+
+	return GetUInt32Value(UNIT_FIELD_LEVEL);
+}
+//升级用户等级
+
+bool Player::LevelUp(uint16 tlevel, uint32 costcoin) {
+	DEBUG_LOG("用户的等级是%d", GetUInt32Value(UNIT_FIELD_LEVEL));
+	int32 oldlevel = GetUInt32Value(UNIT_FIELD_LEVEL);
+	int32 newlevel = oldlevel + tlevel;
+	if (newlevel > DEFAULT_MAX_LEVEL)                        // hardcoded maximum level
+	{
+		newlevel = DEFAULT_MAX_LEVEL;
+	}
+	uint16 t_Flag = costVipCoin(2, costcoin);
+	if (t_Flag == 1) { //扣积分
+		DEBUG_LOG("用户的新等级是%d，已升级", newlevel);
+		GiveLevel(newlevel);
+
+		SetUInt32Value(PLAYER_XP, 0);
+	}
+	return true;
+}
+
+//查询更新表信息
+bool Player::UpdateEXInfo() {
+	QueryResult* result = CharacterDatabase.PQuery("SELECT vipcoin,generalcoin FROM character_vip WHERE guid='%u'", GetGUIDLow());
+	if (result)
+	{
+		Field* fields = result->Fetch();
+		memberEXInfo.vipcoin = fields[0].GetUInt32() - memberEXInfo.costvipcoin;
+		memberEXInfo.generalcoin = fields[1].GetUInt32() - memberEXInfo.costgeneralcoin;
+		memberEXInfo.lastupdate = time(NULL);
+
+	}
+	return true;
+
 }

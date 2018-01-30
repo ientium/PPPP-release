@@ -1983,9 +1983,14 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         SpellCooldowns m_spellCooldowns;
         GlobalCooldownMgr m_GlobalCooldownMgr;
 
+
         bool m_isCreatureLinkingTrigger;
         bool m_isSpawningLinked;
-
+//**********************************************************************************************************************************
+//自定义Buff添加
+		void AddCustomSpellAuras(SpellAuraHolder *holder);
+		void RemoveCustomSpellAuras(SpellAuraHolder *holder);
+//**********************************************************************************************************************************
     public:
         void DisableSpline();
         void UnitDamaged(ObjectGuid from, uint32 damage) { _damageTakenHistory[from] += damage; _lastDamageTaken = 0; }

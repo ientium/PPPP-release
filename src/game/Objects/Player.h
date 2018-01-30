@@ -617,8 +617,15 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADMAILS,
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,
     PLAYER_LOGIN_QUERY_BATTLEGROUND_DATA,
+//********************************************************************************************************************************
+// 角色扩展信息载入  ientium@sina.com 小脏手
+	PLAYER_LOGIN_QUERY_LOADEXINFO,
+
+	//********************************************************************************************************************************
+
 
     MAX_PLAYER_LOGIN_QUERY
+
 };
 
 enum PlayerDelayedOperations
@@ -728,6 +735,27 @@ class MANGOS_DLL_SPEC PlayerTaxi
 };
 
 std::ostringstream& operator<< (std::ostringstream& ss, PlayerTaxi const& taxi);
+
+//***********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//用户扩展信息
+
+struct MemberEXInfo
+{
+	MemberEXInfo() : vipcoin(0), generalcoin(0), activateTaxiTime(0), totaltime(0), costvipcoin(0), costgeneralcoin(0), lastupdate(0), multiplyingexp(1), guild_reputation(0), guildtime(0), talenttime(0){}
+	uint32 vipcoin;            //高级VIP点数
+	uint32 generalcoin;			//普通VIP点数
+	uint32 activateTaxiTime;  //瞬飞到期时间
+	uint32 totaltime;      //剩余转换时间
+	int32 costvipcoin;  //花费的vipcion
+	int32 costgeneralcoin; //花费的普通generalcoin
+	uint32 lastupdate;//最后查询时间
+	int32 multiplyingexp; //经验倍率
+	int32 guild_reputation;//公会声望
+	uint32 guildtime;  //加入公会日期
+	uint32 talenttime;// 天赋到期时间
+};
+//***********************************************************************************************************************************
 
 /// Holder for BattleGround data
 struct BGData
@@ -917,7 +945,25 @@ class MANGOS_DLL_SPEC Player final: public Unit
             m_summon_y = y;
             m_summon_z = z;
         }
-        void SummonIfPossible(bool agree);
+		//**********************************************************************************************************************************		
+		//ientium@sina.com 小脏手修改
+		/*********************************************************/
+		/***                  VIP SYSTEM                     ***/
+		/*********************************************************/
+
+		MemberEXInfo memberEXInfo;
+
+		uint32 getVipInfo(int uType = -1);
+		uint32 setVipMemberCoin(uint32 coins);
+		uint32 getVipInfoTimeToCoin();  //获取未转化VIP积分的时间
+		uint16 costVipCoin(uint16 uType, uint32 t_coin); //花费积分点函数
+		uint16 setUpdateVIPFlyingTime(uint32 timetamp, uint32 coin);
+		uint16 GetInfoLevel();
+		bool LevelUp(uint16 newlevel, uint32 costcoin);//提升用户等级
+
+		bool UpdateEXInfo();  //更新查询信息  
+//**********************************************************************************************************************************
+		void SummonIfPossible(bool agree);
 
         bool Create( uint32 guidlow, const std::string& name, uint8 race, uint8 class_, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair, uint8 outfitId );
 
@@ -1226,6 +1272,18 @@ class MANGOS_DLL_SPEC Player final: public Unit
 
         uint32 m_stableSlots;
 
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+/*********************************************************/
+/***                    EXInfo信息                    ***/
+/*********************************************************/
+
+// 载入 EXInfo 表信息
+		void Player::_LoadEXInfo(QueryResult* result);
+		//              用户VIP表保存                 ***/
+
+		void _SaveEXMemberInfo();
+//********************************************************************************************************************************
         /*********************************************************/
         /***                    GOSSIP SYSTEM                  ***/
         /*********************************************************/

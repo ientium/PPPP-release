@@ -443,6 +443,13 @@ enum eConfigBoolValues
     CONFIG_BOOL_DEATH_BONES_WORLD,
     CONFIG_BOOL_DEATH_BONES_BG,
     CONFIG_BOOL_ALL_TAXI_PATHS,
+//********************************************************************************************************************************
+// 瞬飞标识位  ientium@sina.com 小脏手
+	CONFIG_BOLL_INSTANT_TAXI, 
+
+//********************************************************************************************************************************
+
+
     CONFIG_BOOL_SKILL_FAIL_LOOT_FISHING,
     CONFIG_BOOL_SKILL_FAIL_GAIN_FISHING,
     CONFIG_BOOL_SKILL_FAIL_POSSIBLE_FISHINGPOOL,
