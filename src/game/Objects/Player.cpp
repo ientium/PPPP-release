@@ -21190,7 +21190,7 @@ bool Player::LevelUp(uint16 tlevel, uint32 costcoin) {
 
 //查询更新表信息
 bool Player::UpdateEXInfo() {
-	QueryResult* result = CharacterDatabase.PQuery("SELECT vipcoin,generalcoin FROM character_vip WHERE guid='%u'", GetGUIDLow());
+	QueryResult* result = CharacterDatabase.PQuery("SELECT vipcoin,generalcoin FROM character_exinfo WHERE guid='%u'", GetGUIDLow());
 	if (result)
 	{
 		Field* fields = result->Fetch();
