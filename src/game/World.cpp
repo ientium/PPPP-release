@@ -641,9 +641,10 @@ void World::LoadConfigSettings(bool reload)
     setConfigMinMax(CONFIG_UINT32_MAINTENANCE_DAY, "MaintenanceDay", 4, 0, 6);
 
 //********************************************************************************************************************************
-// ˲�ɱ�ʶλ  ientium@sina.com С����
+// 瞬飞标识位以及最大公会等级  ientium@sina.com 小脏手
 	setConfig(CONFIG_BOLL_INSTANT_TAXI, "InstantFlightPaths", false);
-
+	setConfigMinMax(CONFIG_UINT32_MAX_GUILD_LEVEL, "MaxGuildLevel",3,1,6);
+	
 //********************************************************************************************************************************
 	
 
@@ -1404,6 +1405,13 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading pet level stats...");
     sObjectMgr.LoadPetLevelInfo();
+//******************************************************************************************************************************************************************
+//载入公会升级信息
+//ientium@sina.com 小脏手修改
+
+	sLog.outString("Loading guild level stats...");
+	sObjectMgr.LoadGuildLevelInfo();
+//***************************************************************************************************************************************************************
 
     if (!isMapServer)
     {

@@ -186,6 +186,11 @@ enum eConfigUInt32Values
     CONFIG_UINT32_CHARACTERS_PER_REALM,
     CONFIG_UINT32_SKIP_CINEMATICS,
     CONFIG_UINT32_MAX_PLAYER_LEVEL,
+//************************************************************************************************************
+//添加最大公会等级
+//ientiuim@sina.com 小脏手修改
+	CONFIG_UINT32_MAX_GUILD_LEVEL,
+//*************************************************************************************************************
     CONFIG_UINT32_START_PLAYER_LEVEL,
     CONFIG_UINT32_START_PLAYER_MONEY,
     CONFIG_UINT32_MAX_HONOR_POINTS,
@@ -444,7 +449,7 @@ enum eConfigBoolValues
     CONFIG_BOOL_DEATH_BONES_BG,
     CONFIG_BOOL_ALL_TAXI_PATHS,
 //********************************************************************************************************************************
-// ˲�ɱ�ʶλ  ientium@sina.com С����
+// 瞬飞标识位  ientium@sina.com 小脏手
 	CONFIG_BOLL_INSTANT_TAXI, 
 
 //********************************************************************************************************************************

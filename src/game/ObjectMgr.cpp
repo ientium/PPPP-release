@@ -2498,6 +2498,106 @@ void ObjectMgr::LoadItemRequiredTarget()
     sLog.outString();
     sLog.outString(">> Loaded %u Item required targets", count);
 }
+//**********************************************************************************************************************************************************
+//获取公会升级信息
+//ientium@sina.com 小脏手修改
+
+void ObjectMgr::LoadGuildLevelInfo()
+{
+	// Loading levels data
+	{
+		//                                                  0          1         2           3           4           5    
+		QueryResult *result = WorldDatabase.Query("SELECT leveltype,guildlv, basetime,basemoney, basecontribute,basestep FROM guild_classlevelstats");
+
+		uint32 count = 0;
+
+		if (!result)
+		{
+			BarGoLink bar(1);
+			bar.step();
+
+			sLog.outString();
+			sLog.outString(">> Loaded %u level guild stats definitions", count);
+			sLog.outErrorDb("Error loading `guild_levelstats` table or empty table.");
+			return;
+		}
+
+		BarGoLink bar(result->GetRowCount());
+
+		do
+		{
+			Field* fields = result->Fetch();
+
+			uint32 leveltype = fields[0].GetUInt32();
+			
+
+			uint32 guildlv = fields[1].GetUInt32();
+			if (guildlv > sWorld.getConfig(CONFIG_UINT32_MAX_GUILD_LEVEL))
+			{
+				if (guildlv > STRONG_MAX_LEVEL)       // hardcoded level maximum
+					sLog.outErrorDb("Wrong (> %u) level %u in `guild_levelstats` table, ignoring.", STRONG_MAX_LEVEL, guildlv);
+				else
+				{
+					DETAIL_LOG("Unused (> MaxGuildLevel in mangosd.conf) level %u in `pet_levelstats` table, ignoring.", guildlv);
+					++count;                                // make result loading percent "expected" correct in case disabled detail mode for example.
+				}
+				continue;
+			}
+			else if (guildlv < 1)
+			{
+				sLog.outErrorDb("Wrong (<1) level %u in `pet_levelstats` table, ignoring.", guildlv);
+				continue;
+			}
+
+			GuildLevelInfo*& pInfoMapEntry = guildLvInfo[leveltype];
+
+			if (pInfoMapEntry == NULL)
+				pInfoMapEntry = new GuildLevelInfo[sWorld.getConfig(CONFIG_UINT32_MAX_GUILD_LEVEL)];
+
+			// data for level 1 stored in [0] array element, ...
+			GuildLevelInfo* pLevelInfo = &pInfoMapEntry[leveltype - 1];
+
+			pLevelInfo->basetime = fields[2].GetUInt32();
+			pLevelInfo->basemoney = fields[3].GetUInt32();
+			pLevelInfo->basecontributer = fields[4].GetUInt32();
+			pLevelInfo->basestep = fields[5].GetUInt16();
+
+			bar.step();
+			++count;
+		} while (result->NextRow());
+
+		delete result;
+
+		sLog.outString();
+		sLog.outString(">> Loaded %u level pet stats definitions", count);
+	}
+
+	// Fill gaps and check integrity
+	for (GuildLevelInfoMap::iterator itr = guildLvInfo.begin(); itr != guildLvInfo.end(); ++itr)
+	{
+		GuildLevelInfo* pInfo = itr->second;
+
+		// fatal error if no level 1 data
+		if (!pInfo || pInfo[0].basetime == 0)
+		{
+			sLog.outErrorDb("Creature %u does not have Guild stats data for Level 1!", itr->first);
+			Log::WaitBeforeContinueIfNeed();
+			exit(1);
+		}
+
+		// fill level gaps
+		for (uint32 level = 1; level < sWorld.getConfig(CONFIG_UINT32_MAX_GUILD_LEVEL); ++level)
+		{
+			if (pInfo[level].basetime == 0)
+			{
+				sLog.outErrorDb("Creature %u has no data for Level %i guild stats data, using data of Level %i.", itr->first, level + 1, level);
+				pInfo[level] = pInfo[level - 1];
+			}
+		}
+	}
+}
+//*******************************************************************************************************************************************************************************
+
 
 void ObjectMgr::LoadPetLevelInfo()
 {

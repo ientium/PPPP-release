@@ -166,6 +166,8 @@ bool Group::Create(ObjectGuid guid, const char * name)
 			m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
 			m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
 			isRaidGroup(), leader->GetGuildId());
+			
+		 m_guildid = leader->GetGuildId();
 	}
 //****************************************************************************************************************************************
     if (!AddMember(guid, name))
@@ -1378,10 +1380,13 @@ bool Group::_addMember(ObjectGuid guid, const char* name, bool isAssistant, uint
 		// insert into group table
 		CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,memberGuildId,assistant,subgroup) VALUES('%u','%u','%u','%u','%u')",
 			m_Id, member.guid.GetCounter(), player->GetGuildId(),((member.assistant == 1) ? 1 : 0), member.group);
+	
+		if (player->GetGuildId() != m_guildid) {
+			CharacterDatabase.PExecute("UPDATE groups SET guildid=0 WHERE groupId = '%u'", m_Id);
+			m_guildid = 0;
+		}
 	}
-	if (player->GetGuildId() != m_guildid) {
-		CharacterDatabase.PExecute("UPDATE groups SET guildid=0 WHERE groupId = '%u'",m_Id);
-	}
+	
 //************************************************************************************************************************************
     return true;
 }
@@ -1419,9 +1424,13 @@ bool Group::_removeMember(ObjectGuid guid)
 //************************************************************************************************************************************
 //更新公会id，如果删除成员公会与团长不同 
 //ientium@sina.com 小脏手修改
-	uint32 guild = getGroupGuildid(m_Id);
-	if (guild >0){
- 		CharacterDatabase.PExecute("UPDATE groups SET guildid= '%u' WHERE groupId = '%u'", guild, m_Id);
+	Player *leader = sObjectMgr.GetPlayer(m_leaderGuid);
+	if (player->GetGuildId()!= leader->GetGuildId()){
+		uint32 guild = getGroupGuildid(m_Id);
+		if (guild >0){
+ 			CharacterDatabase.PExecute("UPDATE groups SET guildid= '%u' WHERE groupId = '%u'", guild, m_Id);
+			m_guildid = leader->GetGuildId();
+		}
 	}
 //************************************************************************************************************************************
 
@@ -1533,10 +1542,18 @@ void Group::_setLeader(ObjectGuid guid)
         Player::ConvertInstancesToGroup(player, this, slot->guid);
 
         // update the group leader
-        CharacterDatabase.PExecute("UPDATE groups SET leaderGuid='%u' WHERE groupId='%u'", slot_lowguid, m_Id);
-        CharacterDatabase.CommitTransaction();
-    }
+//*****************************************************************************************************************************************************************************
+//更新团队公会ID
+//ientium@sina.com 小脏手修改
+        //CharacterDatabase.PExecute("UPDATE groups SET leaderGuid='%u' WHERE groupId='%u'", slot_lowguid, m_Id);
+		Player *leader = sObjectMgr.GetPlayer(slot->guid);
 
+		CharacterDatabase.PExecute("UPDATE groups SET leaderGuid='%u',guildid='%u' WHERE groupId='%u'", slot_lowguid, leader->GetGuildId(), m_Id);
+		m_guildid = leader->GetGuildId();
+        
+		CharacterDatabase.CommitTransaction();
+    }
+//*****************************************************************************************************************************************************************************	
     _updateLeaderFlag(true);
     m_leaderGuid = slot->guid;
     m_leaderName = slot->name;

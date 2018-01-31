@@ -251,6 +251,23 @@ struct PetLevelInfo
     uint16 armor;
 };
 
+//***********************************************************************************************************************************************
+//公会等级信息结构体
+//ientium@sina.com 小脏手修改
+struct GuildLevelInfo
+{
+	GuildLevelInfo() : level(0), basetime(0), basemoney(0), basecontributer(0), basestep(0), leveltype(0){}
+
+	uint16 level;
+	uint32 basetime;
+	uint32 basemoney;
+	uint32 basecontributer;
+	uint16 basestep;
+	uint16 leveltype;
+};
+
+//***********************************************************************************************************************************************
+
 // We assume the rate is in general the same for all three types below, but chose to keep three for scalability and customization
 struct RepRewardRate
 {
@@ -872,7 +889,11 @@ class ObjectMgr
 
         void LoadItemTexts();
         void LoadPageTexts();
-
+//**********************************************************************************************************************************************************
+//获取公会升级结构体
+//ientium@sina.com 小脏手修改
+		void LoadGuildLevelInfo();
+//*************************************************************************************************************************************************************
         void LoadPlayerInfo();
         void LoadPetLevelInfo();
         void LoadExplorationBaseXP();
@@ -1416,7 +1437,14 @@ class ObjectMgr
         typedef std::map<uint32,PetLevelInfo*> PetLevelInfoMap;
         // PetLevelInfoMap[creature_id][level]
         PetLevelInfoMap petInfo;                            // [creature_id][level]
+//*******************************************************************************************************************************************************************************
+//公会等级信息结构体
+//ientium@sina.com 小脏手修改
+		typedef std::map<uint32, GuildLevelInfo*> GuildLevelInfoMap;
+		// GuildLevelInfoMap [type_id][level]
+		GuildLevelInfoMap guildLvInfo;                            // [type_id][level]
 
+//*******************************************************************************************************************************************************************************
         PlayerClassInfo playerClassInfo[MAX_CLASSES];
 
         void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
