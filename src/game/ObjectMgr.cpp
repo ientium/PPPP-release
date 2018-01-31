@@ -3281,8 +3281,13 @@ void ObjectMgr::LoadGroups()
     // -- loading groups --
     uint32 count = 0;
     //                                                    0         1              2           3           4              5      6      7      8      9      10     11     12     13      14          15
-    QueryResult *result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, isRaid, leaderGuid, groupId FROM groups");
-
+   
+//*************************************************************************************************************************************
+//载入团队信息，多加了一个公会id字段
+//ientium@sina.com 小脏手修改
+// QueryResult *result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, isRaid, leaderGuid, groupId FROM groups");
+	QueryResult *result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, isRaid, leaderGuid, groupId,guildid FROM groups");
+//*************************************************************************************************************************************
     if (!result)
     {
         BarGoLink bar(1);

@@ -423,6 +423,8 @@ class MANGOS_DLL_SPEC Group
         void CountTheRoll(Rolls::iterator& roll);           // iterator update to next, in CountRollVote if true
         bool CountRollVote(ObjectGuid const& playerGUID, Rolls::iterator& roll, RollVote vote);
 
+		
+
         uint32              m_Id;                           // 0 for not created or BG groups
         MemberSlotList      m_memberSlots;
         GroupRefManager     m_memberMgr;
@@ -443,5 +445,11 @@ class MANGOS_DLL_SPEC Group
         uint8*              m_subGroupsCounts;
         Team                m_groupTeam; // ALLIANCE / HORDE / TEAM_NONE / TEAM_CROSSFACTION
         uint32              m_LFGAreaId;
+//*********************************************************************************************************************************
+// 是否为一个公会的标识，如果是一个公会则值为团长公会id，否则为0
+//ientium@sina.com 小脏手修改
+		uint32              m_guildid;//公会id
+		uint32              getGroupGuildid(uint32 gid);
+//*********************************************************************************************************************************
 };
 #endif
