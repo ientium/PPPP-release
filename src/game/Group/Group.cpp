@@ -147,7 +147,7 @@ bool Group::Create(ObjectGuid guid, const char * name)
 //************************************************************************************************************************************************************************************************************
 //团队创建+公会IDguildid 
 //ientium@sina.com  小脏手修改
-  /*      CharacterDatabase.PExecute("INSERT INTO groups(groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,isRaid) "
+      CharacterDatabase.PExecute("INSERT INTO groups(groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,isRaid) "
                                    "VALUES('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u')",
                                    m_Id, m_leaderGuid.GetCounter(), m_mainTankGuid.GetCounter(), m_mainAssistantGuid.GetCounter(), uint32(m_lootMethod),
                                    m_looterGuid.GetCounter(), uint32(m_lootThreshold),
@@ -156,19 +156,9 @@ bool Group::Create(ObjectGuid guid, const char * name)
                                    m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
                                    m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
                                    isRaidGroup());
-    }*/
-		CharacterDatabase.PExecute("INSERT INTO groups(groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,isRaid,guildid) "
-			"VALUES('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u'','%u')",
-			m_Id, m_leaderGuid.GetCounter(), m_mainTankGuid.GetCounter(), m_mainAssistantGuid.GetCounter(), uint32(m_lootMethod),
-			m_looterGuid.GetCounter(), uint32(m_lootThreshold),
-			m_targetIcons[0].GetRawValue(), m_targetIcons[1].GetRawValue(),
-			m_targetIcons[2].GetRawValue(), m_targetIcons[3].GetRawValue(),
-			m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
-			m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
-			isRaidGroup(), leader->GetGuildId());
+    }
 			
-		 m_guildid = leader->GetGuildId();
-	}
+
 //****************************************************************************************************************************************
     if (!AddMember(guid, name))
         return false;
@@ -208,11 +198,7 @@ bool Group::LoadGroupFromDB(Field* fields)
 
     for (int i = 0; i < TARGET_ICON_COUNT; ++i)
         m_targetIcons[i] = ObjectGuid(fields[5 + i].GetUInt64());
-//*****************************************************************************************************************************
-//载入团队的公会id
-//ientium@sina.com  小脏手修改
-	m_guildid = fields[16].GetUInt32();   //公会id
-//*****************************************************************************************************************************
+
     return true;
 }
 
@@ -1369,23 +1355,12 @@ bool Group::_addMember(ObjectGuid guid, const char* name, bool isAssistant, uint
 //************************************************************************************************************************************
 //更新公会id，如果新加入的公会与团长不同 
 //ientium@sina.com 小脏手修改
-   /* if (!isBGGroup())
+   if (!isBGGroup())
     {
         // insert into group table
         CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,assistant,subgroup) VALUES('%u','%u','%u','%u')",
                                    m_Id, member.guid.GetCounter(), ((member.assistant == 1) ? 1 : 0), member.group);
-    }*/
-	if (!isBGGroup())
-	{
-		// insert into group table
-		CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,memberGuildId,assistant,subgroup) VALUES('%u','%u','%u','%u','%u')",
-			m_Id, member.guid.GetCounter(), player->GetGuildId(),((member.assistant == 1) ? 1 : 0), member.group);
-	
-		if (player->GetGuildId() != m_guildid) {
-			CharacterDatabase.PExecute("UPDATE groups SET guildid=0 WHERE groupId = '%u'", m_Id);
-			m_guildid = 0;
-		}
-	}
+    }
 	
 //************************************************************************************************************************************
     return true;
@@ -1421,18 +1396,7 @@ bool Group::_removeMember(ObjectGuid guid)
 
     if (!isBGGroup())
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid='%u'", guid.GetCounter());
-//************************************************************************************************************************************
-//更新公会id，如果删除成员公会与团长不同 
-//ientium@sina.com 小脏手修改
-	Player *leader = sObjectMgr.GetPlayer(m_leaderGuid);
-	if (player->GetGuildId()!= leader->GetGuildId()){
-		uint32 guild = getGroupGuildid(m_Id);
-		if (guild >0){
- 			CharacterDatabase.PExecute("UPDATE groups SET guildid= '%u' WHERE groupId = '%u'", guild, m_Id);
-			m_guildid = leader->GetGuildId();
-		}
-	}
-//************************************************************************************************************************************
+
 
 
 
@@ -1543,13 +1507,7 @@ void Group::_setLeader(ObjectGuid guid)
 
         // update the group leader
 //*****************************************************************************************************************************************************************************
-//更新团队公会ID
-//ientium@sina.com 小脏手修改
-        //CharacterDatabase.PExecute("UPDATE groups SET leaderGuid='%u' WHERE groupId='%u'", slot_lowguid, m_Id);
-		Player *leader = sObjectMgr.GetPlayer(slot->guid);
 
-		CharacterDatabase.PExecute("UPDATE groups SET leaderGuid='%u',guildid='%u' WHERE groupId='%u'", slot_lowguid, leader->GetGuildId(), m_Id);
-		m_guildid = leader->GetGuildId();
         
 		CharacterDatabase.CommitTransaction();
     }
