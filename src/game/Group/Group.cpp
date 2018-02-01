@@ -2162,7 +2162,23 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
         bool is_raid = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsRaid() && isRaidGroup();
         bool is_dungeon = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsDungeon();
         float group_rate = MaNGOS::XP::xp_in_group_rate(count, is_raid);
-
+//***********************************************************************************************************************************************************************		
+		Creature* creature = pVictim->ToCreature();
+		uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
+		uint32 gid = 0;
+		//判断是否是团对本，是否是4大本Boss
+		if (is_raid&&xpex>0) {
+			//判断是否是首杀
+			if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
+				//首杀处理
+			}
+			gid = getGroupGuildid();
+			//判断是否是公会团 ,如果是加公会贡献度和击杀记录次数
+			if (gid>0) {
+				UpdateGuildBossRecord(creature->GetEntry(), gid);   //更新Boss击杀记录
+			}
+		}
+//****************************************************************************************************************************************************************************
         for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player* pGroupGuy = itr->getSource();
@@ -2178,9 +2194,10 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 //******************************************************************************************************************************************************************************
 //如果是团队本并且为公会团
 //ientium@sina.com 小脏手修改
-
-			if (is_raid&& getGroupGuildid()>0){
-				RewardGuildGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, 1);  //公会贡献度
+			if (is_raid&&xpex>0){
+				if(gid>0){
+					RewardGuildGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, xpex);  //公会贡献度
+				}
 			}
 //******************************************************************************************************************************************************************************
             RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
@@ -2190,6 +2207,13 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
         {
             // member (alive or dead) or his corpse at req. distance
             if (player_tap->IsAtGroupRewardDistance(pVictim)){
+//******************************************************************************************************************************************************
+				if (is_raid&&xpex>0) {
+					if (gid>0) {
+						RewardGuildGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, xpex);  //公会贡献度
+					}
+				}
+//******************************************************************************************************************************************************
                 RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
 			}
         }
@@ -2364,62 +2388,166 @@ uint32 Group::getGroupGuildid()
 	}
 	delete result;
 }
-//************************************************************************************************************************************
-//返回公会Guildid
-//ientium@sina.com 小脏手修改
-uint32 Group::getGroupGuildid()
-{
-	QueryResult *result = CharacterDatabase.PQuery("SELECT distinct(memberGuildId) WHERE groupId = '%u'", m_Id);
-	if (!result)
-	{
-		sLog.outString();
 
-		sLog.outErrorDb("`GroupGuilid` table is empty!");
-		return 0;
-	}
-	if (result->GetRowCount() > 1) {
-		return 0;
-	}
-	else {
-		Field *fields = result->Fetch();
-		return fields[0].GetUInt32();
-
-	}
-	delete result;
-}
 //Boss的贡献度处理
 //12118 鲁西弗隆 11982玛格曼达 12259 基赫纳斯 12057加尔 12264沙斯拉尔
-uint32 Group::getBossCreature(Unit* pVictim)
+uint32 Group::getBossCreature(uint32 bossid)
 {
-	Creature* creature = pVictim->ToCreature();
-	switch (creature->GetEntry)
+	
+	switch (bossid)
 	{
-		case 12118:  //MC鲁西弗隆
-		{
+		case 12118:   //MC鲁西弗隆
+		case 11982:   //MC玛格曼达
+		case 12259:   //MC基赫纳斯
+		case 12057:   //MC加尔
+		case 12264:   //MC沙斯拉尔
+		case 12056:   //MC迦顿男爵
+		case 11988:   //MC焚化者古雷曼格
+		case 12098:   //MC萨弗隆先驱者
+		case 12018:   //MC管理者埃克索图斯
+			return 1;
+		break;
+		case 12435:   //BWL狂野的拉佐格尔
+		case 13020:   //BWL堕落的瓦拉斯塔兹
+		case 12017:   //BWL勒什雷尔
+		case 11983:   //BWL费尔默
+		case 14601:   //BWL埃博诺克
+		case 11981:    //BWL弗莱格尔
+		case 14020:    //BWL克洛玛古斯
+			return 2;
+		break;
+		case 11502:    //MC 拉格纳罗斯
+		case 15263:    //TAQ 预言者斯克拉姆
+		case 15276:    //TAQ 维克洛尔大帝
+		case 15299:    //TAQ维希度斯
+		case 15509:     //TAQ哈霍兰公主
+		case 15510:     //TAQ顽强的范克瑞斯
+		case 15511:     //TAQ克里勋爵
+		case 15516:     //TAQ沙尔图拉
+		case 15517:     //TAQ奥罗
+		case 15543:     //TAQ亚尔基公主
+		case 15544:     //TAQ维姆
+			return 3;
+		break;
+		case 11583:    //BWL 奈法利安
+		case 15928:    //NAXX 塔迪乌斯
+		case 15929:    //NAXX 斯塔拉格
+		case 15930:    //NAXX 费尔根
+		case 15931:     //NAXX 格罗布鲁斯
+		case 15932:     //NAXX 格拉斯
+		case 15936:     //NAXX 肮脏的希尔盖
+		case 15952:     //NAXX 迈克斯纳
+		case 15953:     //NAXX 黑女巫法琳娜
+		case 15954:     //NAXX 药剂师诺斯
+		case 15956:     //NAXX 阿努布雷坎
+		case 15989:     //NAXX 萨菲隆
+		case 16011:     //NAXX 洛欧塞布
+		case 16028:     //NAXX 帕奇维克
+		case 16060:     //NAXX 收割者戈提克
+		case 16061:     //NAXX 教官拉苏维奥斯
+		case 16062:     //NAXX 大领主莫格莱尼
+		case 16063:     //NAXX 瑟里耶克爵士
+		case 16064:     //NAXX 库尔塔兹领主
+		case 16065:     //NAXX 女公爵布劳缪克丝
+			return 4;
+		break;
+		case 15727:  //TAQ 克苏恩
+			return 5;
+		break;
+		case 15990:  //NAXX 克尔苏加德
+			return 7;
+		break;
+		default:
+			return 0;
+	}
+}
+//更新公会团的Boss记录及贡献值
+void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 	
-		}
-		break;
-		case 11982:  //MC玛格曼达
+	switch (bossid)
+	{
+		
+		case 12118:   //MC鲁西弗隆
+		case 11982:   //MC玛格曼达
+		case 12259:   //MC基赫纳斯
+		case 12057:   //MC加尔
+		case 12264:   //MC沙斯拉尔
+		case 12056:   //MC迦顿男爵
+		case 11988:   //MC焚化者古雷曼格
+		case 12098:   //MC萨弗隆先驱者
+		case 12018:   //MC管理者埃克索图斯
 		{
-
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+2 WHERE guildid='%u'", guildid);
 		}
 		break;
-		case 12259:  //MC基赫纳斯
+		case 12435:   //狂野的拉佐格尔
+		case 13020:   //堕落的瓦拉斯塔兹
+		case 12017:   //勒什雷尔
+		case 11983:   //费尔默
+		case 14601:   //埃博诺克
+		case 11981:    //弗莱格尔
+		case 14020:     //克洛玛古斯
 		{
-
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+3 WHERE guildid='%u'", guildid);
 		}
 		break;
-		case 12057:  //MC加尔
+		case 15263:    //TAQ 预言者斯克拉姆
+		case 15276:    //TAQ 维克洛尔大帝
+		case 15299:    //维希度斯
+		case 15509:     //哈霍兰公主
+		case 15510:     //顽强的范克瑞斯
+		case 15511:     //克里勋爵
+		case 15516:     //沙尔图拉
+		case 15517:     //奥罗
+		case 15543:     //亚尔基公主
+		case 15544:     //维姆
 		{
-
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+4 WHERE guildid='%u'", guildid);
 		}
 		break;
-		case 12264:  //MC沙斯拉尔
+		case 15928:    //NAXX 塔迪乌斯
+		case 15929:    //NAXX 斯塔拉格
+		case 15930:    //NAXX 费尔根
+		case 15931:     //NAXX 格罗布鲁斯
+		case 15932:     //NAXX 格拉斯
+		case 15936:     //NAXX 肮脏的希尔盖
+		case 15952:     //NAXX 迈克斯纳
+		case 15953:     //NAXX 黑女巫法琳娜
+		case 15954:     //NAXX 药剂师诺斯
+		case 15956:     //NAXX 阿努布雷坎
+		case 15989:     //NAXX 萨菲隆
+		case 16011:     //NAXX 洛欧塞布
+		case 16028:     //NAXX 帕奇维克
+		case 16060:     //NAXX 收割者戈提克
+		case 16061:     //NAXX 教官拉苏维奥斯
+		case 16062:     //NAXX 大领主莫格莱尼
+		case 16063:     //NAXX 瑟里耶克爵士
+		case 16064:     //NAXX 库尔塔兹领主
+		case 16065:     //NAXX 女公爵布劳缪克丝
 		{
-
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+5 WHERE guildid='%u'", guildid);
 		}
 		break;
-	
+		case 11502:  //MC 拉格纳罗斯
+		{
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET mcnum =mcnum+1,guildXP=guildXP+20 WHERE guildid='%u'", guildid);
+		}
+		break;
+		case 11583:  //BWL 奈法利安
+		{
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET bwlnum =bwlnum+1,guildXP=guildXP+25 WHERE guildid='%u'", guildid);
+		}
+		break;
+		case 15727:  //TAQ 克苏恩
+		{
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET taqnum =taqnum+1,guildXP=guildXP+30 WHERE guildid='%u'", guildid);
+		}
+		break;
+		case 15990:  //NAXX 克尔苏加德
+		{
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET naxxnum =naxxnum+1,guildXP=guildXP+40 WHERE guildid='%u'", guildid);
+		}
+		break;
 	}
 }
 

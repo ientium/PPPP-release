@@ -2713,6 +2713,104 @@ PetLevelInfo const* ObjectMgr::GetPetLevelInfo(uint32 creature_id, uint32 level)
     return &itr->second[level - 1];                         // data for level 1 stored in [0] array element, ...
 }
 
+//**********************************************************************************************************************************************************
+//Boss首杀信息
+//ientium@sina.com  小脏手修改
+void ObjectMgr::LoadBossFirstKillInfo() {
+	QueryResult *result = CharacterDatabase.Query("SELECT creatureid，createtime FROM world_firest_instance");
+
+	uint32 count = 0;
+	//MC
+/*
+	creatureKillTime[12118] = 0;  ////MC鲁西弗隆
+	creatureKillTime[11982] = 0;  ////MC鲁西弗隆
+	creatureKillTime[12259] = 0;  ////MC鲁西弗隆
+	creatureKillTime[12057] = 0;  ////MC鲁西弗隆
+	creatureKillTime[12264] = 0;  ////MC鲁西弗隆
+	creatureKillTime[12056] = 0;  ////MC鲁西弗隆
+	creatureKillTime[11988] = 0;  ////MC鲁西弗隆
+	creatureKillTime[12098] = 0;
+	creatureKillTime[12018] = 0;
+	creatureKillTime[11502] = 0;
+    //BWL
+	creatureKillTime[12435] = 0;
+	creatureKillTime[13020] = 0;
+	creatureKillTime[12017] = 0;
+	creatureKillTime[11983] = 0;
+	creatureKillTime[14601] = 0;
+	creatureKillTime[11981] = 0;
+	creatureKillTime[14020] = 0;
+	creatureKillTime[11583] = 0;
+	//TAQ
+	creatureKillTime[15263] = 0;
+	creatureKillTime[15276] = 0;
+	creatureKillTime[15299] = 0;
+	creatureKillTime[15509] = 0;
+	creatureKillTime[15510] = 0;
+	creatureKillTime[15511] = 0;
+	creatureKillTime[15516] = 0;
+	creatureKillTime[15517] = 0;
+	creatureKillTime[15543] = 0;
+	creatureKillTime[15544] = 0;
+	creatureKillTime[15727] = 0;
+//NAXX
+	creatureKillTime[15928] = 0;
+	creatureKillTime[15929] = 0;
+	creatureKillTime[15930] = 0;
+	creatureKillTime[15931] = 0;
+	creatureKillTime[15932] = 0;
+	creatureKillTime[15936] = 0;
+	creatureKillTime[15952] = 0;
+	creatureKillTime[15953] = 0;
+	creatureKillTime[15954] = 0;
+	creatureKillTime[15956] = 0;
+	creatureKillTime[15989] = 0;
+	creatureKillTime[16011] = 0;
+	creatureKillTime[16028] = 0;
+	creatureKillTime[16060] = 0;
+	creatureKillTime[16061] = 0;
+	creatureKillTime[16062] = 0;
+	creatureKillTime[16063] = 0;
+	creatureKillTime[16064] = 0;
+	creatureKillTime[16065] = 0;
+	creatureKillTime[15990] = 0;
+	*/
+	if (!result)
+	{
+		BarGoLink bar(1);
+
+		sLog.outString();
+		sLog.outString(">> Loaded %u xp for  world_firest_record", count);
+		sLog.outErrorDb("Error loading `world_firest_instance` table or empty table.");
+		Log::WaitBeforeContinueIfNeed();
+		exit(1);
+	}
+
+	BarGoLink bar(result->GetRowCount());
+
+	do
+	{
+		Field* fields = result->Fetch();
+
+		uint32 creature_id = fields[0].GetUInt32();
+		uint32 create_time = fields[1].GetUInt32();
+
+		//PlayerXPperLevel
+		creatureKillTime[creature_id] = create_time;
+		bar.step();
+		++count;
+	} while (result->NextRow());
+
+	delete result;
+
+	sLog.outString();
+	sLog.outString(">> Loaded %u world_firest_instance", count);
+
+}
+
+
+//**********************************************************************************************************************************************************
+
 void ObjectMgr::LoadPlayerInfo()
 {
     // Load playercreate
@@ -6200,6 +6298,16 @@ uint32 ObjectMgr::GetXPForLevel(uint32 level) const
     return 0;
 }
 
+uint32 ObjectMgr::GetBossFirstKillTime(uint32 bossid) const
+{
+	return creatureKillTime[bossid];
+
+}
+void ObjectMgr::SetBossFirstKillTime(uint32 bossid,uint32 firstTime) const
+{
+	creatureKillTime[bossid] = firstTime;
+
+}
 void ObjectMgr::LoadPetNames()
 {
     uint32 count = 0;

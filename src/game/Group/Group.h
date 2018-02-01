@@ -328,8 +328,9 @@ class MANGOS_DLL_SPEC Group
 // 是否为一个公会的标识，如果是一个公会则值为团长公会id，否则为0
 //ientium@sina.com 小脏手修改
 //uint32              m_guildid;//公会id
-		uint32              getGroupGuildid();
-		uint32             getBossCreature(Unit* pVictim)
+		uint32 getGroupGuildid();
+		uint32 getBossCreature(uint32 bossid);
+		void UpdateGuildBossRecord(uint32 bossid, uint32 guildid);//更新公会击杀记录及贡献度
 		//*********************************************************************************************************************************
         /*********************************************************/
         /***                   LFG SYSTEM                      ***/
