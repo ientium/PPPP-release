@@ -2723,6 +2723,28 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 
     SetUInt32Value(PLAYER_XP, newXP);
 }
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手 
+//加入公会贡献度计算
+
+//********************************************************************************************************************************
+void Player::GiveGuildReputation(uint32 xp, Unit* victim)
+{
+	if (xp < 1)
+		return;
+
+
+	uint32 level = getLevel();
+
+	// XP to money conversion processed in Player::RewardQuest
+	if (level >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+		return;
+
+	if (GetGuildId()>0)
+	memberEXInfo.guild_reputation = memberEXInfo.guild_reputation + xp;
+
+}
+//********************************************************************************************************************************
 
 // Update player to next level
 // Current player experience not update (must be update by caller)

@@ -1627,6 +1627,14 @@ class MANGOS_DLL_SPEC Player final: public Unit
 			memberEXInfo.guild_reputation = 0;   //加入与退出公会贡献值都清零
 			SetUInt32Value(PLAYER_GUILDID, GuildId);
 		}
+		//********************************************************************************************************************************
+		//ientium@sina.com 小脏手 
+		//加入公会贡献度计算
+
+
+		//********************************************************************************************************************************
+		void GiveGuildReputation(uint32 xp, Unit* victim);
+			
 //***************************************************************************************************************************************************************************
         void SetRank(uint32 rankId){ SetUInt32Value(PLAYER_GUILDRANK, rankId); }
         void SetGuildIdInvited(uint32 GuildId) { m_GuildIdInvited = GuildId; }

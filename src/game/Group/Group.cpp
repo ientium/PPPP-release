@@ -2021,7 +2021,58 @@ void Group::_homebindIfInstance(Player *player)
         }
     }
 }
+//**********************************************************************************************************************************************************************
+//公会团队击杀奖励
+//ientium@sina.com 小脏手修改
+static void RewardGuildGroupAtKill_helper(Player* pGroupGuy, Unit* pVictim, uint32 count, bool PvP, float group_rate, uint32 sum_level, bool is_dungeon, uint32 xp)
+{
+	// honor can be in PvP and !PvP (racial leader) cases (for alive)
+	//判断Bossid
+	Creature* creature = pVictim->ToCreature();
 
+	if (pGroupGuy->isAlive())
+	{
+		pGroupGuy->RewardHonor(pVictim, count);
+
+		if (pGroupGuy->GetBattleGround() && pGroupGuy->GetBattleGround()->GetTypeID() == BATTLEGROUND_AV) // Ivina < Nostalrius > HK in AV also reward 1 rep point.
+		{
+			if (pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+			{
+				Player *pPVictim = (Player *)pVictim;
+				if ((pGroupGuy->GetTeam() == ALLIANCE) && (pPVictim->GetTeam() == HORDE))
+				{
+					FactionEntry const* factionEntry = sFactionStore.LookupEntry(730);
+					if (factionEntry)
+						pGroupGuy->GetReputationMgr().ModifyReputation(factionEntry, 1);
+				}
+				if ((pGroupGuy->GetTeam() == HORDE) && (pPVictim->GetTeam() == ALLIANCE))
+				{
+					FactionEntry const* factionEntry = sFactionStore.LookupEntry(729);
+					if (factionEntry)
+						pGroupGuy->GetReputationMgr().ModifyReputation(factionEntry, 1);
+				}
+			}
+		}
+	}
+
+	// xp and reputation only in !PvP case
+	if (!PvP)
+	{
+
+		// 贡献度给团队的玩家 
+		pGroupGuy->GiveGuildReputation(xp, pVictim);
+		// quest objectives updated only for alive group member or dead but with not released body
+		if (pGroupGuy->isAlive() || !pGroupGuy->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+		{
+
+			// normal creature (not pet/etc) can be only in !PvP case
+			if (pVictim->GetTypeId() == TYPEID_UNIT)
+				pGroupGuy->KilledMonster(((Creature*)pVictim)->GetCreatureInfo(), pVictim->GetObjectGuid());
+		}
+
+	}
+}
+//**********************************************************************************************************************************************************************
 static void RewardGroupAtKill_helper(Player* pGroupGuy, Unit* pVictim, uint32 count, bool PvP, float group_rate, uint32 sum_level, bool is_dungeon, Player* not_gray_member_with_max_level, Player* member_with_max_level, uint32 xp)
 {
     // honor can be in PvP and !PvP (racial leader) cases (for alive)
@@ -2077,9 +2128,10 @@ static void RewardGroupAtKill_helper(Player* pGroupGuy, Unit* pVictim, uint32 co
             if (pVictim->GetTypeId() == TYPEID_UNIT)
                 pGroupGuy->KilledMonster(((Creature*)pVictim)->GetCreatureInfo(), pVictim->GetObjectGuid());
         }
+
     }
 }
-
+//团队击杀奖励
 /** Provide rewards to group members at unit kill
  *
  * @param pVictim       Killed unit
@@ -2120,18 +2172,26 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
             // will proccessed later
             if (pGroupGuy == player_tap)
                 continue;
-
-            if (!pGroupGuy->IsAtGroupRewardDistance(pVictim))
+			//判断用户生存或者死亡或者尸体距离
+            if (!pGroupGuy->IsAtGroupRewardDistance(pVictim))    
                 continue;                               // member (alive or dead) or his corpse at req. distance
+//******************************************************************************************************************************************************************************
+//如果是团队本并且为公会团
+//ientium@sina.com 小脏手修改
 
+			if (is_raid&& getGroupGuildid()>0){
+				RewardGuildGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, 1);  //公会贡献度
+			}
+//******************************************************************************************************************************************************************************
             RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
         }
 
         if (player_tap)
         {
             // member (alive or dead) or his corpse at req. distance
-            if (player_tap->IsAtGroupRewardDistance(pVictim))
+            if (player_tap->IsAtGroupRewardDistance(pVictim)){
                 RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
+			}
         }
     }
 }
@@ -2285,9 +2345,9 @@ void Group::UpdateLooterGuid(WorldObject* pLootedObject, bool ifneed)
 //************************************************************************************************************************************
 //返回公会Guildid
 //ientium@sina.com 小脏手修改
-uint32 Group::getGroupGuildid(uint32 gid)
+uint32 Group::getGroupGuildid()
 {
-	QueryResult *result = CharacterDatabase.PQuery("SELECT distinct(memberGuildId) WHERE groupId = '%u'", gid);
+	QueryResult *result = CharacterDatabase.PQuery("SELECT distinct(memberGuildId) WHERE groupId = '%u'", m_Id);
 	if (!result)
 	{
 		sLog.outString();
@@ -2304,3 +2364,65 @@ uint32 Group::getGroupGuildid(uint32 gid)
 	}
 	delete result;
 }
+//************************************************************************************************************************************
+//返回公会Guildid
+//ientium@sina.com 小脏手修改
+uint32 Group::getGroupGuildid()
+{
+	QueryResult *result = CharacterDatabase.PQuery("SELECT distinct(memberGuildId) WHERE groupId = '%u'", m_Id);
+	if (!result)
+	{
+		sLog.outString();
+
+		sLog.outErrorDb("`GroupGuilid` table is empty!");
+		return 0;
+	}
+	if (result->GetRowCount() > 1) {
+		return 0;
+	}
+	else {
+		Field *fields = result->Fetch();
+		return fields[0].GetUInt32();
+
+	}
+	delete result;
+}
+//Boss的贡献度处理
+//12118 鲁西弗隆 11982玛格曼达 12259 基赫纳斯 12057加尔 12264沙斯拉尔
+uint32 Group::getBossCreature(Unit* pVictim)
+{
+	Creature* creature = pVictim->ToCreature();
+	switch (creature->GetEntry)
+	{
+		case 12118:  //MC鲁西弗隆
+		{
+	
+		}
+		break;
+		case 11982:  //MC玛格曼达
+		{
+
+		}
+		break;
+		case 12259:  //MC基赫纳斯
+		{
+
+		}
+		break;
+		case 12057:  //MC加尔
+		{
+
+		}
+		break;
+		case 12264:  //MC沙斯拉尔
+		{
+
+		}
+		break;
+	
+	}
+}
+
+
+
+

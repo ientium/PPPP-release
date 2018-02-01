@@ -968,6 +968,8 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     return damage;
 }
 
+//杀怪处理函数
+
 void Unit::Kill(Unit* pVictim, SpellEntry const *spellProto, bool durabilityLoss)
 {
     // find player: owner of controlled `this` or `this` itself maybe
@@ -1090,9 +1092,11 @@ void Unit::Kill(Unit* pVictim, SpellEntry const *spellProto, bool durabilityLoss
             loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold, creature->GetCreatureInfo()->maxgold);
         }
 
-        if (group_tap)
-            group_tap->RewardGroupAtKill(pVictim, player_tap);
-        else if (player_tap)
+        if (group_tap){
+			//团队杀怪处理
+			group_tap->RewardGroupAtKill(pVictim, player_tap);
+
+        }else if (player_tap)
             player_tap->RewardSinglePlayerAtKill(pVictim);
     }
     if (Player* playerVictim = pVictim->ToPlayer())
@@ -4082,7 +4086,9 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
 	//ientium@sina.com 小脏手
 	//添加自定义技能效果
 	//DEBUG_LOG("PLAYER: %u ===================================>: %u", holder->GetId(), holder->GetCasterGuid());
+	
 	AddCustomSpellAuras(holder);
+
 //*****************************************************************************************************************************************************************************
 
     // if aura deleted before boosts apply ignore
@@ -4715,13 +4721,15 @@ void Unit::RemoveSpellAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mode)
         if (Aura *aura = holder->m_auras[i])
             RemoveAura(aura, mode);
     }
-
-    holder->_RemoveSpellAuraHolder();
 //*********************************************************************************************************************************************************************************	
 	//ientium@sina.com 小脏手
 	//删除自定义光环效果
+
 	RemoveCustomSpellAuras(holder);
+
 //*********************************************************************************************************************************************************************************
+
+    holder->_RemoveSpellAuraHolder();
     if (mode != AURA_REMOVE_BY_DELETE)
         holder->HandleSpellSpecificBoosts(false);
 
@@ -11710,6 +11718,7 @@ void Unit::InitPlayerDisplayIds()
 
 }
 //**********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
 //自定义Buff添加
 void Unit::AddCustomSpellAuras(SpellAuraHolder *holder) {
 	//Unit* pCaster = Aur->GetCaster();
@@ -11742,18 +11751,11 @@ void Unit::RemoveCustomSpellAuras(SpellAuraHolder *holder) {
 	switch (holder->GetId())
 	{
 	case 35004: //双倍经验卷轴
-
-
-
-		pCaster->memberEXInfo.multiplyingexp = 1;   //倍率恢复为2
+		pCaster->memberEXInfo.multiplyingexp = 1;   //倍率恢复为1
 
 		break;
 	case 35005: //双倍经验卷轴
-
-		
-
-		pCaster->memberEXInfo.multiplyingexp = 1;   //倍率恢复为2
-
+		pCaster->memberEXInfo.multiplyingexp = 1;   //倍率恢复为1
 		break;
 
 	}
