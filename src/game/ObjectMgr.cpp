@@ -2717,7 +2717,7 @@ PetLevelInfo const* ObjectMgr::GetPetLevelInfo(uint32 creature_id, uint32 level)
 //Boss首杀信息
 //ientium@sina.com  小脏手修改
 void ObjectMgr::LoadBossFirstKillInfo() {
-	QueryResult *result = CharacterDatabase.Query("SELECT creatureid，createtime FROM world_firest_instance");
+	QueryResult *result = CharacterDatabase.Query("SELECT entryid,creatureid,createtime FROM world_firest_instance");
 
 	uint32 count = 0;
 	//MC
@@ -2780,20 +2780,20 @@ void ObjectMgr::LoadBossFirstKillInfo() {
 		BarGoLink bar(1);
 
 		sLog.outString();
-		sLog.outString(">> Loaded %u xp for  world_firest_record", count);
+		sLog.outString(">> Loaded %u record for  world_firest_record", count);
 		sLog.outErrorDb("Error loading `world_firest_instance` table or empty table.");
 		Log::WaitBeforeContinueIfNeed();
 		exit(1);
 	}
 
 	BarGoLink bar(result->GetRowCount());
-
+	creatureKillTime.resize(result->GetRowCount()+1);
 	do
 	{
 		Field* fields = result->Fetch();
 
 		uint32 creature_id = fields[0].GetUInt32();
-		uint32 create_time = fields[1].GetUInt32();
+		uint32 create_time = fields[2].GetUInt32();
 
 		//PlayerXPperLevel
 		creatureKillTime[creature_id] = create_time;
@@ -6297,15 +6297,81 @@ uint32 ObjectMgr::GetXPForLevel(uint32 level) const
         return mPlayerXPperLevel[level];
     return 0;
 }
+uint16 ObjectMgr::GetBossKillTimeID(uint32 bossid) const
+{
+	uint16 bossEntryId = 0;
+	switch (bossid)
+	{
+	case 12118:   bossEntryId = 1; break;
+	case 11982:   bossEntryId = 2; break;//MC玛格曼达
+	case 12259:   bossEntryId = 3; break;//MC基赫纳斯
+	case 12057:   bossEntryId = 4; break;//MC加尔
+	case 12264:   bossEntryId = 5; break; //MC沙斯拉尔
+	case 12056:   bossEntryId = 6; break;//MC迦顿男爵
+	case 11988:   bossEntryId = 7; break;//MC焚化者古雷曼格
+	case 12098:   bossEntryId = 8; break;//MC萨弗隆先驱者
+	case 12018:   bossEntryId = 9; break;//MC管理者埃克索图斯
+	case 11502:   bossEntryId = 10; break;//MC 拉格纳罗斯
 
+	case 12435:   bossEntryId = 11; break;//BWL狂野的拉佐格尔
+	case 13020:   bossEntryId = 12; break;//BWL堕落的瓦拉斯塔兹
+	case 12017:   bossEntryId = 13; break;//BWL勒什雷尔
+	case 11983:   bossEntryId = 14; break;//BWL费尔默
+	case 14601:   bossEntryId = 15; break;//BWL埃博诺克
+	case 11981:   bossEntryId = 16; break; //BWL弗莱格尔
+	case 14020:   bossEntryId = 17; break; //BWL克洛玛古斯
+	case 11583:   bossEntryId = 18; break;//BWL 奈法利安
+
+	case 15263:   bossEntryId = 19; break;//TAQ 预言者斯克拉姆
+	case 15276:   bossEntryId = 20; break;//TAQ 维克洛尔大帝
+	case 15299:   bossEntryId = 21; break;//TAQ维希度斯
+	case 15509:   bossEntryId = 22; break;//TAQ哈霍兰公主
+	case 15510:   bossEntryId = 23; break;//TAQ顽强的范克瑞斯
+	case 15511:   bossEntryId = 24; break;//TAQ克里勋爵
+	case 15516:   bossEntryId = 25; break;//TAQ沙尔图拉
+	case 15517:   bossEntryId = 26; break;//TAQ奥罗
+	case 15543:   bossEntryId = 27; break;//TAQ亚尔基公主
+	case 15544:   bossEntryId = 28; break;//TAQ维姆
+	case 15727:   bossEntryId = 29; break;//TAQ 克苏恩
+
+	case 15928:   bossEntryId = 30; break; //NAXX 塔迪乌斯
+	case 15929:   bossEntryId = 31; break;//NAXX 斯塔拉格
+	case 15930:   bossEntryId = 32; break;//NAXX 费尔根
+	case 15931:   bossEntryId = 33; break;//NAXX 格罗布鲁斯
+	case 15932:   bossEntryId = 34; break;//NAXX 格拉斯
+	case 15936:   bossEntryId = 35; break; //NAXX 肮脏的希尔盖
+	case 15952:   bossEntryId = 36; break;  //NAXX 迈克斯纳
+	case 15953:   bossEntryId = 37; break;  //NAXX 黑女巫法琳娜
+	case 15954:   bossEntryId = 38; break;  //NAXX 药剂师诺斯
+	case 15956:   bossEntryId = 39; break; //NAXX 阿努布雷坎
+	case 15989:   bossEntryId = 40; break;//NAXX 萨菲隆
+	case 16011:   bossEntryId = 41; break;//NAXX 洛欧塞布
+	case 16028:   bossEntryId = 42; break;//NAXX 帕奇维克
+	case 16060:   bossEntryId = 43; break;//NAXX 收割者戈提克
+	case 16061:   bossEntryId = 44; break;//NAXX 教官拉苏维奥斯
+	case 16062:   bossEntryId = 45; break;//NAXX 大领主莫格莱尼
+	case 16063:   bossEntryId = 46; break;//NAXX 瑟里耶克爵士
+	case 16064:   bossEntryId = 47; break;//NAXX 库尔塔兹领主
+	case 16065:   bossEntryId = 48; break;//NAXX 女公爵布劳缪克丝
+	case 15990:   bossEntryId = 49; break;//NAXX 克尔苏加德
+	default:
+		bossEntryId = 0;
+	}
+	return bossEntryId;
+}
 uint32 ObjectMgr::GetBossFirstKillTime(uint32 bossid) const
 {
-	return creatureKillTime[bossid];
-
+	uint16 bossEntryId = GetBossKillTimeID(bossid);
+	if (bossEntryId !=0){
+		return creatureKillTime[bossEntryId];
+	}
+	else
+		return 0;
 }
-void ObjectMgr::SetBossFirstKillTime(uint32 bossid,uint32 firstTime) const
+void ObjectMgr::SetBossFirstKillTime(uint32 bossid,uint32 firstTime) 
 {
-	creatureKillTime[bossid] = firstTime;
+	uint16 bossEntryId = GetBossKillTimeID(bossid);
+	creatureKillTime[bossEntryId] = firstTime;
 
 }
 void ObjectMgr::LoadPetNames()

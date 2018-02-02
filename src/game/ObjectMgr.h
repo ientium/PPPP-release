@@ -894,6 +894,8 @@ class ObjectMgr
 //ientium@sina.com 小脏手修改
 		void LoadGuildLevelInfo();
 		void LoadBossFirstKillInfo();//Boss首杀信息
+		typedef std::vector<uint32> CreatureKillTime;       // [level]
+		CreatureKillTime creatureKillTime;
 //*************************************************************************************************************************************************************
         void LoadPlayerInfo();
         void LoadPetLevelInfo();
@@ -930,7 +932,8 @@ class ObjectMgr
 //获取Boss首杀时间
 //ientium@sina.com 小脏手修改
 		uint32 GetBossFirstKillTime(uint32 bossid) const;
-		void SetBossFirstKillTime(uint32 bossid, uint32 firstTime) const;
+		void SetBossFirstKillTime(uint32 bossid, uint32 firstTime);
+		uint16 GetBossKillTimeID(uint32 bossid) const;   //获得对应的Index
 //***************************************************************************************************************************************
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {
@@ -1450,8 +1453,7 @@ class ObjectMgr
 		// GuildLevelInfoMap [type_id][level]
 		GuildLevelInfoMap guildLvInfo;                            // [type_id][level]
 		//Boss首杀判断
-		typedef std::vector<uint32> CreatureKillTime;       // [level]
-		CreatureKillTime creatureKillTime;
+		
 //*******************************************************************************************************************************************************************************
         PlayerClassInfo playerClassInfo[MAX_CLASSES];
 

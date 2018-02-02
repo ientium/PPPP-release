@@ -2166,13 +2166,21 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 		Creature* creature = pVictim->ToCreature();
 		uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
 		uint32 gid = 0;
+		std::string guildname = "";
 		//判断是否是团对本，是否是4大本Boss
 		if (is_raid&&xpex>0) {
+			
+			gid = getGroupGuildid();
+			
 			//判断是否是首杀
 			if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
 				//首杀处理
+				Player* leader = sObjectMgr.GetPlayer(m_leaderGuid);
+				guildname = sGuildMgr.GetGuildNameById(leader->GetGuildId());
+				UpdateFirstBossKillRecord(creature->GetEntry(), gid, guildname);//更新击杀时间为当前时间
+				sLog.outString();
+				sLog.outString(">>Boss首杀时间 %u", time(NULL));
 			}
-			gid = getGroupGuildid();
 			//判断是否是公会团 ,如果是加公会贡献度和击杀记录次数
 			if (gid>0) {
 				UpdateGuildBossRecord(creature->GetEntry(), gid);   //更新Boss击杀记录
@@ -2550,7 +2558,17 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 		break;
 	}
 }
+//更新Boss首杀记录及贡献值
+void Group::UpdateFirstBossKillRecord(uint32 bossid,uint32 guildid, std::string guildstr) {
+	uint16 bossEntryId = sObjectMgr.GetBossKillTimeID(bossid);
+	sObjectMgr.creatureKillTime[bossEntryId] = time(NULL);//更新击杀时间为当前时间
+	if(guildid!=0){
+		CharacterDatabase.PExecute("UPDATE world_firest_instance SET guildid='%u',guildname='%s',leaderguid='%u',leadername='%s',groupnum='%u',createtime='%u' WHERE creatureid='%u'", guildid, guildstr.c_str(), m_leaderGuid,m_leaderName.c_str(), GetMembersCount(), bossid);
+	}else {
+	
+	}
 
+}
 
 
 

@@ -1094,6 +1094,7 @@ void Unit::Kill(Unit* pVictim, SpellEntry const *spellProto, bool durabilityLoss
 
         if (group_tap){
 			//团队杀怪处理
+			
 			group_tap->RewardGroupAtKill(pVictim, player_tap);
 
         }else if (player_tap)

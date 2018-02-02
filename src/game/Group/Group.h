@@ -331,6 +331,7 @@ class MANGOS_DLL_SPEC Group
 		uint32 getGroupGuildid();
 		uint32 getBossCreature(uint32 bossid);
 		void UpdateGuildBossRecord(uint32 bossid, uint32 guildid);//更新公会击杀记录及贡献度
+		void UpdateFirstBossKillRecord(uint32 bossid, uint32 guildid, std::string guildstr);  //更新Boss首杀记录
 		//*********************************************************************************************************************************
         /*********************************************************/
         /***                   LFG SYSTEM                      ***/
