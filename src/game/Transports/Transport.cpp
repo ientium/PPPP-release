@@ -99,6 +99,7 @@ bool Transport::Create(uint32 guidlow, uint32 entry, uint32 mapid, float x, floa
     UpdateRotationFields(0.0f, 1.0f);
 
     sObjectAccessor.AddObject(this);
+
     return true;
 }
 

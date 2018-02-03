@@ -77,6 +77,8 @@ void TransportMgr::LoadTransportTemplates()
         TransportTemplate& transport = _transportTemplates[entry];
         transport.entry = entry;
         GeneratePath(goInfo, &transport);
+		//载入运输船NPC信息
+		LoadTransportNPCTemplate(entry, &transport);
         MMAP::MMapFactory::createOrGetMMapManager()->loadGameObject(goInfo->displayId);
 
         // transports in instance are only on one map
@@ -90,7 +92,35 @@ void TransportMgr::LoadTransportTemplates()
     delete result;
     sLog.outString(">> Loaded %u transport templates in %u ms", count, WorldTimer::getMSTimeDiffToNow(oldMSTime));
 }
+//载入NPC及偏移量信息
+void TransportMgr::LoadTransportNPCTemplate(uint32 entry,TransportTemplate* transport)
+{
 
+	uint32 oldMSTime = WorldTimer::getMSTime();
+	QueryResult* result = WorldDatabase.PQuery("SELECT entry,creature_id,x_vule,y_vule,z_vule FROM transport_exinfo WHERE entry = '%u'", entry);
+
+	if (!result)
+	{
+		sLog.outString(">> Loaded 0 transport_npc templates. DB table `ransport_exinfo` has no transports!");
+		return;
+	}
+
+	uint32 count = 0;
+	transport->m_NPCInfo.resize(result->GetRowCount());
+	do
+	{
+		Field* fields = result->Fetch();
+		uint32 entry = fields[0].GetUInt32();
+		transport->m_NPCInfo[count].creature_id= fields[1].GetUInt32();
+		transport->m_NPCInfo[count].x_vule = fields[2].GetFloat();
+		transport->m_NPCInfo[count].y_vule = fields[3].GetFloat();
+		transport->m_NPCInfo[count].z_vule = fields[4].GetFloat();
+		++count;
+	} while (result->NextRow());
+
+	delete result;
+	sLog.outString(">> Loaded %u transport_npc_templates in %u ms", count, WorldTimer::getMSTimeDiffToNow(oldMSTime));
+}
 class SplineRawInitializer
 {
 public:
@@ -107,7 +137,7 @@ public:
 
     Movement::PointsArray& _points;
 };
-
+//形成路径
 void TransportMgr::GeneratePath(GameObjectInfo const* goInfo, TransportTemplate* transport)
 {
     uint32 pathId = goInfo->moTransport.taxiPathId;
@@ -380,6 +410,29 @@ Transport* TransportMgr::CreateTransport(uint32 entry, uint32 guid /*= 0*/, Map*
 
     // Passengers will be loaded once a player is near
     trans->GetMap()->Add<Transport>(trans);
+	//添加个乘务员
+	//AddTransportsCreature(trans->GetMap(),tInfo,trans, x, y, z, o);
+	size_t len = tInfo->m_NPCInfo.size();
+	/*for (size_t i = 0; i < len; i++) {
+		CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(tInfo->m_NPCInfo[i].creature_id);
+		if (!cinfo)
+		{
+			return false;
+		}
+		CreatureInfo const* waypointInfo = ObjectMgr::GetCreatureTemplate(VISUAL_WAYPOINT);
+		if (!waypointInfo || waypointInfo->GetHighGuid() != HIGHGUID_UNIT)
+			return false;                                       // must exist as normal creature in mangos.sql 'creature_template'
+
+		CreatureCreatePos pos(map, x, y, z, o);
+		Creature* pCreature = new Creature;
+		if (!pCreature->Create(tInfo->m_NPCInfo[i].creature_id, pos, waypointInfo))
+			return false;
+		trans->AddPassenger(pCreature);
+
+	}
+	*/
+
+
     return trans;
 }
 
@@ -426,3 +479,13 @@ void TransportMgr::CreateInstanceTransports(Map* map)
     for (std::set<uint32>::const_iterator itr = mapTransports->second.begin(); itr != mapTransports->second.end(); ++itr)
         CreateTransport(*itr, 0, map);
 }
+//********************************************************************************************************************************************
+//添加NPC乘客
+// ientium@sina.com 小脏手修改
+//
+/*bool AddTransportsCreature(Map* map, const TransportTemplate* tinfo, Transport* trans, float x, float y, float z, float o)
+{
+
+	
+}*/
+

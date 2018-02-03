@@ -65,7 +65,21 @@ struct KeyFrame
     bool IsUpdateFrame() const { return Update; }
     bool IsStopFrame() const { return Node->actionFlag == 2; }
 };
+//******************************************************************************************************************************************
+//运输船添加NPC模板
+//ientium@sina.com 小脏手修改
+struct TransportNPCTemplate
+{
+	TransportNPCTemplate() : creature_id(0), x_vule(0.00f), y_vule(0.00f), z_vule(0.00f), entry(0) { }
 
+	uint32 creature_id;
+	float x_vule;
+	float y_vule;
+	float z_vule;
+	uint32 entry;
+};
+
+//****************************************************************************************************************************************
 struct TransportTemplate
 {
     TransportTemplate() : inInstance(false), pathTime(0), accelTime(0.0f), accelDist(0.0f), entry(0) { }
@@ -78,6 +92,11 @@ struct TransportTemplate
     float accelTime;
     float accelDist;
     uint32 entry;
+//******************************************************************************************************************************************
+	//运输船添加NPC模板
+	//ientium@sina.com 小脏手修改
+	std::vector<TransportNPCTemplate> m_NPCInfo;
+//****************************************************************************************************************************************
 };
 
 
@@ -96,6 +115,8 @@ class TransportMgr
 
         void LoadTransportTemplates();
 
+		void LoadTransportNPCTemplate(uint32 entry, TransportTemplate* transport);//载入NPC及偏移量信息
+
         // Creates a transport using given GameObject template entry
         Transport* CreateTransport(uint32 entry, uint32 guid = 0, Map* map = NULL);
 
@@ -112,7 +133,13 @@ class TransportMgr
                 return &itr->second;
             return NULL;
         }
-
+//*************************************************************************************************************************************
+//添加NPC乘客
+//ientium@sina.com小脏手修改
+	//bool AddTransportsCreature(Map* map,Transport* trans, float x, float y, float z, float o);
+		
+//************************************************************************************************************************************
+		
     private:
         TransportMgr();
         ~TransportMgr();
