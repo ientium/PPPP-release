@@ -334,7 +334,7 @@ dtNavMeshQuery const* MMapManager::GetNavMeshQuery(uint32 mapId)
             return NULL;
         }
 
-        DETAIL_LOG("MMAP:GetNavMeshQuery: created dtNavMeshQuery for mapId %03u thread %u", mapId, tid);
+        //DETAIL_LOG("MMAP:GetNavMeshQuery: created dtNavMeshQuery for mapId %03u thread %u", mapId, tid);
         mmap->navMeshQueries.insert(std::pair<uint32, dtNavMeshQuery*>(tid, navMeshQuery));
     }
     else

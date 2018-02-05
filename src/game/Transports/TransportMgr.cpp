@@ -366,7 +366,7 @@ Transport* TransportMgr::CreateTransport(uint32 entry, uint32 guid /*= 0*/, Map*
     // instance case, execute GetGameObjectEntry hook
     if (map && !entry)
         return NULL;
-
+	
     TransportTemplate const* tInfo = GetTransportTemplate(entry);
     if (!tInfo)
     {
@@ -406,14 +406,16 @@ Transport* TransportMgr::CreateTransport(uint32 entry, uint32 guid /*= 0*/, Map*
 
     // use preset map for instances (need to know which instance)
     trans->SetLocationInstanceId(sMapMgr.GetContinentInstanceId(mapId, x, y));
-    trans->SetMap(map ? map : sMapMgr.CreateMap(mapId, trans));
+	Map* tmap = map ? map : sMapMgr.CreateMap(mapId, trans);
+	trans->SetMap(map ? map : sMapMgr.CreateMap(mapId, trans));
 
-    // Passengers will be loaded once a player is near
-    trans->GetMap()->Add<Transport>(trans);
+	//***************************************************************************************************************************************
 	//添加个乘务员
-	//AddTransportsCreature(trans->GetMap(),tInfo,trans, x, y, z, o);
 	size_t len = tInfo->m_NPCInfo.size();
-	/*for (size_t i = 0; i < len; i++) {
+
+	//AddTransportsCreature(trans->GetMap(),tInfo,trans, x, y, z, o);
+	
+	for (size_t i = 0; i < len; i++) {
 		CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(tInfo->m_NPCInfo[i].creature_id);
 		if (!cinfo)
 		{
@@ -423,14 +425,21 @@ Transport* TransportMgr::CreateTransport(uint32 entry, uint32 guid /*= 0*/, Map*
 		if (!waypointInfo || waypointInfo->GetHighGuid() != HIGHGUID_UNIT)
 			return false;                                       // must exist as normal creature in mangos.sql 'creature_template'
 
-		CreatureCreatePos pos(map, x, y, z, o);
+		CreatureCreatePos pos(tmap, x, y, z, o);
 		Creature* pCreature = new Creature;
 		if (!pCreature->Create(tInfo->m_NPCInfo[i].creature_id, pos, waypointInfo))
 			return false;
 		trans->AddPassenger(pCreature);
+		trans->GetMap()->Add<Creature>(pCreature);
+		sLog.outDetail(">>= == == == == 创建NPCID是： %u ", pCreature->GetGUIDLow());
 
+		
 	}
-	*/
+	//***************************************************************************************************************************************	
+
+    // Passengers will be loaded once a player is near
+    trans->GetMap()->Add<Transport>(trans);
+
 
 
     return trans;

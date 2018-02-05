@@ -11763,3 +11763,4 @@ void Unit::RemoveCustomSpellAuras(SpellAuraHolder *holder) {
 
 }
 
+

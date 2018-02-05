@@ -1926,7 +1926,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float getNativeScale() const;
         void setNativeScale(float scale);
 
-    protected:
+//**************************************************************************************************************************
+		//NPC‰º†ÈÄÅ
+		//*********************************************************************************************************************************    
+	protected:
         explicit Unit ();
 
         void _UpdateSpells(uint32 time);
@@ -1987,7 +1990,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool m_isCreatureLinkingTrigger;
         bool m_isSpawningLinked;
 //**********************************************************************************************************************************
-//◊‘∂®“ÂBuffÃÌº”
+//Ëá™ÂÆö‰πâBuffÊ∑ªÂä†
 		void AddCustomSpellAuras(SpellAuraHolder *holder);
 		void RemoveCustomSpellAuras(SpellAuraHolder *holder);
 //**********************************************************************************************************************************
