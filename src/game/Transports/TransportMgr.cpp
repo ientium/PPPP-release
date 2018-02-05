@@ -409,38 +409,47 @@ Transport* TransportMgr::CreateTransport(uint32 entry, uint32 guid /*= 0*/, Map*
 	Map* tmap = map ? map : sMapMgr.CreateMap(mapId, trans);
 	trans->SetMap(map ? map : sMapMgr.CreateMap(mapId, trans));
 
-	//***************************************************************************************************************************************
-	//添加个乘务员
-	size_t len = tInfo->m_NPCInfo.size();
 
-	//AddTransportsCreature(trans->GetMap(),tInfo,trans, x, y, z, o);
-	
-	for (size_t i = 0; i < len; i++) {
-		CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(tInfo->m_NPCInfo[i].creature_id);
-		if (!cinfo)
-		{
-			return false;
-		}
-		CreatureInfo const* waypointInfo = ObjectMgr::GetCreatureTemplate(VISUAL_WAYPOINT);
-		if (!waypointInfo || waypointInfo->GetHighGuid() != HIGHGUID_UNIT)
-			return false;                                       // must exist as normal creature in mangos.sql 'creature_template'
-
-		CreatureCreatePos pos(tmap, x, y, z, o);
-		Creature* pCreature = new Creature;
-		if (!pCreature->Create(tInfo->m_NPCInfo[i].creature_id, pos, waypointInfo))
-			return false;
-		trans->AddPassenger(pCreature);
-		trans->GetMap()->Add<Creature>(pCreature);
-		sLog.outDetail(">>= == == == == 创建NPCID是： %u ", pCreature->GetGUIDLow());
-
-		
-	}
-	//***************************************************************************************************************************************	
 
     // Passengers will be loaded once a player is near
     trans->GetMap()->Add<Transport>(trans);
 
+	//***************************************************************************************************************************************
+	//添加个乘务员
 
+	size_t len = trans->_transportInfo->m_NPCInfo.size();
+
+	//AddTransportsCreature(trans->GetMap(),tInfo,trans, x, y, z, o);
+
+	for (size_t i = 0; i < len; i++) {
+		CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(trans->_transportInfo->m_NPCInfo[i].creature_id);
+		if (!cinfo)
+		{
+			return false;
+		}
+
+		CreatureCreatePos pos(tmap, x, y, z, o);
+		Creature* pCreature = new Creature;
+		uint32 lowguid = sObjectMgr.GenerateStaticCreatureLowGuid();
+		if (!lowguid)
+		{
+			return false;
+		}
+		if (!pCreature->Create(lowguid, pos, cinfo)) {
+
+			return false;
+		}
+		uint32 db_guid = pCreature->GetGUIDLow();
+
+		trans->GetMap()->Add(pCreature);
+		trans->AddPassenger(pCreature);
+		//
+
+		sLog.outDetail(">>Transports %u == == == 的乘客为: %u ", entry, trans->_passengers.size());
+
+
+	}
+	//***************************************************************************************************************************************	
 
     return trans;
 }

@@ -182,8 +182,11 @@ void Transport::Update(uint32 diff, uint32)
 
 void Transport::AddPassenger(WorldObject* passenger)
 {
-    if (!IsInWorld())
-        return;
+	if (!IsInWorld()) {
+		sLog.outDetail(">>Transports  == == ======== 的名字是: %u ",  passenger->GetName());
+		return;
+	}
+        
 
     if (_passengers.insert(passenger).second)
     {
