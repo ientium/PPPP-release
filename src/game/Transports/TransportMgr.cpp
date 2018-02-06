@@ -97,7 +97,7 @@ void TransportMgr::LoadTransportNPCTemplate(uint32 entry,TransportTemplate* tran
 {
 
 	uint32 oldMSTime = WorldTimer::getMSTime();
-	QueryResult* result = WorldDatabase.PQuery("SELECT entry,creature_id,x_vule,y_vule,z_vule FROM transport_exinfo WHERE entry = '%u'", entry);
+	QueryResult* result = WorldDatabase.PQuery("SELECT entry,creature_id,x_vule,y_vule,z_vule,o_vule FROM transport_exinfo WHERE entry = '%u'", entry);
 
 	if (!result)
 	{
@@ -115,6 +115,7 @@ void TransportMgr::LoadTransportNPCTemplate(uint32 entry,TransportTemplate* tran
 		transport->m_NPCInfo[count].x_vule = fields[2].GetFloat();
 		transport->m_NPCInfo[count].y_vule = fields[3].GetFloat();
 		transport->m_NPCInfo[count].z_vule = fields[4].GetFloat();
+		transport->m_NPCInfo[count].z_vule = fields[5].GetFloat();
 		++count;
 	} while (result->NextRow());
 
@@ -428,7 +429,7 @@ Transport* TransportMgr::CreateTransport(uint32 entry, uint32 guid /*= 0*/, Map*
 			return false;
 		}
 
-		CreatureCreatePos pos(tmap, x, y, z, o);
+		CreatureCreatePos pos(tmap, x+ trans->_transportInfo->m_NPCInfo[i].x_vule, y + trans->_transportInfo->m_NPCInfo[i].y_vule, z + trans->_transportInfo->m_NPCInfo[i].z_vule, -o);
 		Creature* pCreature = new Creature;
 		uint32 lowguid = sObjectMgr.GenerateStaticCreatureLowGuid();
 		if (!lowguid)

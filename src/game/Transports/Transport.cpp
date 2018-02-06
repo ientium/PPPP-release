@@ -305,14 +305,19 @@ bool Transport::TeleportTransport(uint32 newMapid, float x, float y, float z, fl
             case TYPEID_UNIT:
                 // Units teleport on transport not implemented.
                 //RemovePassenger(obj);
-				obj->GetMap()->Remove(obj->ToCreature(), false);
-				newMap->RemoveRelocatedUnit(obj->ToUnit());
-				newMap->Add(obj->ToCreature());
-				newMap->CreatureRelocation(obj->ToCreature(), destX, destY, destZ, destO);
 				
-				//obj->Relocate(destX, destY, destZ, destO);
+				if(newMap != oldMap){
+					obj->GetMap()->Remove(obj->ToCreature(), false);
+					newMap->CreatureRelocation(obj->ToCreature(), destX, destY, destZ, destO);
+					newMap->Add(obj->ToCreature());
+				}
+				else {
+					newMap->CreatureRelocation(obj->ToCreature(), destX, destY, destZ, destO);
+				}
+
 				//obj->SetMap(newMap);
-				//newMap->Add(obj);
+
+
                 break;
             case TYPEID_GAMEOBJECT:
             {

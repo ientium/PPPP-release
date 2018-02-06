@@ -70,12 +70,13 @@ struct KeyFrame
 //ientium@sina.com 小脏手修改
 struct TransportNPCTemplate
 {
-	TransportNPCTemplate() : creature_id(0), x_vule(0.00f), y_vule(0.00f), z_vule(0.00f), entry(0) { }
+	TransportNPCTemplate() : creature_id(0), x_vule(0.00f), y_vule(0.00f), z_vule(0.00f), o_vule(0.00f), entry(0) { }
 
 	uint32 creature_id;
 	float x_vule;
 	float y_vule;
 	float z_vule;
+	float o_vule;
 	uint32 entry;
 };
 
