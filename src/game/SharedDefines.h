@@ -97,6 +97,8 @@ enum Classes
 
 #define PLAYER_MAX_BATTLEGROUND_QUEUES 3
 
+#define MAX_TALENT_SPEC_COUNT 2
+
 enum ReputationRank : uint32
 {
     REP_HATED       = 0,

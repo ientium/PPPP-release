@@ -110,6 +110,18 @@ struct PlayerSpell
     bool dependent         : 1;                             // learned as result another spell learn, skill grow, quest reward, etc
     bool disabled          : 1;                             // first rank has been learned in result talent learn but currently talent unlearned, save max learned ranks
 };
+//*************************************************************************************************************************************
+//双天赋修改，
+//ientium@sina.com 小脏手
+struct PlayerTalent
+{
+	TalentEntry const* talentEntry;
+	uint32 currentRank;
+	PlayerSpellState state;
+};
+//*************************************************************************************************************************************
+
+typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;
 
 typedef UNORDERED_MAP<uint32, PlayerSpell> PlayerSpellMap;
 
@@ -620,7 +632,7 @@ enum PlayerLoginQueryIndex
 //********************************************************************************************************************************
 // 角色扩展信息载入  ientium@sina.com 小脏手
 	PLAYER_LOGIN_QUERY_LOADEXINFO,
-
+	PLAYER_LOGIN_QUERY_LOADTALENTS,   //载入双倍天赋
 	//********************************************************************************************************************************
 
 
@@ -1279,10 +1291,12 @@ class MANGOS_DLL_SPEC Player final: public Unit
 /*********************************************************/
 
 // 载入 EXInfo 表信息
-		void Player::_LoadEXInfo(QueryResult* result);
+		void _LoadEXInfo(QueryResult* result);
 		//              用户VIP表保存                 ***/
-
+		void _LoadTalents(QueryResult* result);    //双天赋
+		//
 		void _SaveEXMemberInfo();
+		void _SaveTalents();    //保存天赋信息
 //********************************************************************************************************************************
         /*********************************************************/
         /***                    GOSSIP SYSTEM                  ***/
@@ -1524,6 +1538,14 @@ class MANGOS_DLL_SPEC Player final: public Unit
         bool resetTalents(bool no_cost = false);
         uint32 resetTalentsCost();
         void updateResetTalentsMultiplier();
+
+		void SendTalentsInfoData(bool pet);
+		void BuildPlayerTalentsInfoData(WorldPacket* data);
+		bool HasTalent(uint32 spell_id, uint8 spec) const;
+
+		PlayerTalent const* GetKnownTalentById(int32 talentId) const;
+		//SpellEntry const* GetKnownTalentRankById(int32 talentId) const;
+
         void InitTalentForLevel();
         void LearnTalent(uint32 talentId, uint32 talentRank);
         uint32 CalculateTalentsPoints() const;
@@ -2392,6 +2414,13 @@ class MANGOS_DLL_SPEC Player final: public Unit
         SpellModList m_spellMods[MAX_SPELLMOD];
         EnchantDurationList m_enchantDuration;
         ItemDurationList m_itemDuration;
+//*****************************************************************************************************************************
+//双天赋修改
+//ientium@sina.com 小脏手
+		PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
+		uint8 m_activeSpec;
+		uint8 m_specsCount;
+//*****************************************************************************************************************************
 
         ObjectGuid m_resurrectGuid;
         uint32 m_resurrectMap;

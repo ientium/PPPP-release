@@ -946,6 +946,7 @@ enum OpcodesList
     SMSG_REFER_A_FRIEND_FAILURE                     = 0x420,
     SMSG_SUMMON_CANCEL                              = 0x423
 */
+     SMSG_TALENT_UPDATE = 0x4C0,
 };
 
 // Don't forget to change this value and add opcode name to Opcodes.cpp when you add new opcode!

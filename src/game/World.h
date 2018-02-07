@@ -190,6 +190,7 @@ enum eConfigUInt32Values
 //添加最大公会等级
 //ientiuim@sina.com 小脏手修改
 	CONFIG_UINT32_MAX_GUILD_LEVEL,
+	CONFIG_UINT32_MAX_TALENT_SPEC_COUNT, //默认最大天赋
 //*************************************************************************************************************
     CONFIG_UINT32_START_PLAYER_LEVEL,
     CONFIG_UINT32_START_PLAYER_MONEY,

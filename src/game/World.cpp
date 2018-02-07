@@ -644,7 +644,8 @@ void World::LoadConfigSettings(bool reload)
 // 瞬飞标识位以及最大公会等级  ientium@sina.com 小脏手
 	setConfig(CONFIG_BOLL_INSTANT_TAXI, "InstantFlightPaths", false);
 	setConfigMinMax(CONFIG_UINT32_MAX_GUILD_LEVEL, "MaxGuildLevel",3,1,6);
-	
+	if (configNoReload(reload, CONFIG_UINT32_MAX_TALENT_SPEC_COUNT, "MaxTalentSpecCount", MAX_TALENT_SPEC_COUNT))
+		setConfigMinMax(CONFIG_UINT32_MAX_TALENT_SPEC_COUNT, "MaxTalentSpecCount", MAX_TALENT_SPEC_COUNT, 1, MAX_TALENT_SPEC_COUNT);
 //********************************************************************************************************************************
 	
 

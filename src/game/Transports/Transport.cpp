@@ -306,14 +306,11 @@ bool Transport::TeleportTransport(uint32 newMapid, float x, float y, float z, fl
                 // Units teleport on transport not implemented.
                 //RemovePassenger(obj);
 				
-				if(newMap != oldMap){
+				
 					obj->GetMap()->Remove(obj->ToCreature(), false);
 					newMap->CreatureRelocation(obj->ToCreature(), destX, destY, destZ, destO);
 					newMap->Add(obj->ToCreature());
-				}
-				else {
-					newMap->CreatureRelocation(obj->ToCreature(), destX, destY, destZ, destO);
-				}
+				
 
 				//obj->SetMap(newMap);
 

@@ -2917,6 +2917,8 @@ void Player::UpdateFreeTalentPoints(bool resetIfNeed)
 void Player::InitTalentForLevel()
 {
     UpdateFreeTalentPoints();
+	//if (!GetSession()->PlayerLoading())
+	//	SendTalentsInfoData(false);                         // update at client
 }
 
 void Player::InitStatsForLevel(bool reapplyMods)
@@ -3381,7 +3383,29 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool dependen
 
     if (talentPos)
     {
-        // update used talent points count
+		// update talent map
+		PlayerTalentMap::iterator iter = m_talents[m_activeSpec].find(talentPos->talent_id);
+		if (iter != m_talents[m_activeSpec].end())
+		{
+			// check if ranks different or removed
+			if ((*iter).second.state == PLAYERSPELL_REMOVED || talentPos->rank != (*iter).second.currentRank)
+			{
+				(*iter).second.currentRank = talentPos->rank;
+
+				if ((*iter).second.state != PLAYERSPELL_NEW)
+					(*iter).second.state = PLAYERSPELL_CHANGED;
+			}
+		}
+		else
+		{
+			PlayerTalent talent;
+			talent.currentRank = talentPos->rank;
+			talent.talentEntry = sTalentStore.LookupEntry(talentPos->talent_id);
+			talent.state = IsInWorld() ? PLAYERSPELL_NEW : PLAYERSPELL_UNCHANGED;
+			m_talents[m_activeSpec][talentPos->talent_id] = talent;
+		}
+		
+		// update used talent points count
         m_usedTalentCount += GetTalentSpellCost(talentPos);
         UpdateFreeTalentPoints(false);
     }
@@ -14743,10 +14767,23 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
     // add ghost flag (must be after aura load: PLAYER_FLAGS_GHOST set in aura)
     if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         m_deathState = DEAD;
+	_LoadSpells(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSPELLS));
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//载入VIPInfo信息表
+	_LoadEXInfo(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEXINFO));
 
-    _LoadSpells(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSPELLS));
+//********************************************************************************************************************************	
 
-    // after spell load
+    
+
+	//***********************************************************************************************************************************
+	// 双天赋修改
+	//	ientium@sina.com 小脏手修改
+	_LoadTalents(holder->GetResult(PLAYER_LOGIN_QUERY_LOADTALENTS));
+	//************************************************************************************************************************************
+
+	// after spell load
     InitTalentForLevel();
     learnDefaultSpells();
 
@@ -14807,12 +14844,6 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
     // has to be called after last Relocate() in Player::LoadFromDB
     SetFallInformation(0, GetPositionZ());
 
-//********************************************************************************************************************************
-	//ientium@sina.com 小脏手修改
-	//载入VIPInfo信息表
-	_LoadEXInfo(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEXINFO));
-	
-//********************************************************************************************************************************	
 	_LoadSpellCooldowns(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSPELLCOOLDOWNS));
 
 
@@ -15137,6 +15168,10 @@ void Player::_LoadEXInfo(QueryResult* result)
 		memberEXInfo.guild_reputation = fields[4].GetUInt32(); //公会声望
 		memberEXInfo.guildtime = fields[5].GetUInt32(); //加入公会日期
 		memberEXInfo.talenttime= fields[6].GetUInt32(); //天赋到期日期
+
+		m_activeSpec = fields[7].GetUInt32(); //激活天赋
+		m_specsCount = fields[8].GetUInt32(); //天赋数量
+
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costgeneralcoin = 0;
@@ -15512,6 +15547,13 @@ void Player::_LoadSpells(QueryResult *result)
             Field *fields = result->Fetch();
 
             uint32 spell_id = fields[0].GetUInt32();
+			/*if (GetTalentSpellPos(spell_id))
+			{
+				sLog.outError("Player::_LoadSpells: %s has talent spell %u in character_spell, removing it.",
+					GetGuidStr().c_str(), spell_id);
+				CharacterDatabase.PExecute("DELETE FROM character_spell WHERE spell = '%u'", spell_id);
+				continue;
+			}*/
 
             addSpell(spell_id, fields[1].GetBool(), false, false, fields[2].GetBool());
         }
@@ -16052,8 +16094,10 @@ void Player::SaveToDB(bool online, bool force)
     m_honorMgr.Save();
 //********************************************************************************************************************************
 //ientium@sina.com 小脏手修改
+	_SaveTalents();  //保存天赋信息
 //保存EX的表信息
 	_SaveEXMemberInfo();
+
 //********************************************************************************************************************************
     // Systeme de phasing
     sObjectMgr.SetPlayerWorldMask(GetGUIDLow(), GetWorldMask());
@@ -16210,7 +16254,7 @@ void Player::_SaveEXMemberInfo()
 	UpdateEXInfo();
 
 	SqlStatement stmtDel = CharacterDatabase.CreateStatement(delVIPInfo, "DELETE FROM character_exinfo WHERE guid = ?");
-	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime,guild_reputation,guildtime,talenttime) VALUES (?, ?, ?, ?, ?,?,?,?)");
+	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime,guild_reputation,guildtime,talenttime,activeSpec,specsCount) VALUES (?, ?, ?, ?, ?,?,?,?,?,?)");
 
 	stmtDel.PExecute(GetGUIDLow());
 	stmtIns.addUInt32(GetGUIDLow());
@@ -16233,6 +16277,9 @@ void Player::_SaveEXMemberInfo()
 	stmtIns.addUInt32(memberEXInfo.guild_reputation);
 	stmtIns.addUInt32(memberEXInfo.guildtime);
 	stmtIns.addUInt32(memberEXInfo.talenttime);
+	stmtIns.addUInt32(m_activeSpec); //激活天赋
+	stmtIns.addUInt32(m_specsCount);//天赋数量
+
 	stmtIns.Execute();
 }
 //********************************************************************************************************************************
@@ -19744,7 +19791,8 @@ void Player::HandleFall(MovementInfo const& movementInfo)
         }
     }
 }
-
+//***********************************************************************************************************************************
+//原始LearnTalent
 void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 {
     uint32 CurTalentPoints = GetFreeTalentPoints();
@@ -19794,13 +19842,22 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
         if (TalentEntry const *depTalentInfo = sTalentStore.LookupEntry(talentInfo->DependsOn))
         {
             bool hasEnoughRank = false;
+			
+			PlayerTalentMap::iterator dependsOnTalent = m_talents[m_activeSpec].find(depTalentInfo->TalentID);
+			
             for (int i = talentInfo->DependsOnRank; i < MAX_TALENT_RANK; ++i)
             {
                 if (depTalentInfo->RankID[i] != 0)
                     if (HasSpell(depTalentInfo->RankID[i]))
                         hasEnoughRank = true;
             }
-
+			
+			if (dependsOnTalent != m_talents[m_activeSpec].end() && dependsOnTalent->second.state != PLAYERSPELL_REMOVED)
+			{
+				PlayerTalent depTalent = (*dependsOnTalent).second;
+				if (depTalent.currentRank >= talentInfo->DependsOnRank)
+					hasEnoughRank = true;
+			}
             if (!hasEnoughRank)
                 return;
         }
@@ -19814,6 +19871,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     uint32 spentPoints = 0;
 
     uint32 tTab = talentInfo->TalentTab;
+	
     if (talentInfo->Row > 0)
     {
         unsigned int numRows = sTalentStore.GetNumRows();
@@ -19837,6 +19895,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
             }
         }
     }
+	
 
     // not have required min points spent in talent tree
     if (spentPoints < (talentInfo->Row * MAX_TALENT_RANK))
@@ -19858,6 +19917,8 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     learnSpell(spellid, false);
     DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
 }
+
+
 
 void Player::UpdateFallInformationIfNeed(MovementInfo const& minfo, uint16 opcode)
 {
@@ -21224,3 +21285,184 @@ bool Player::UpdateEXInfo() {
 	return true;
 
 }
+//********************************************************************************************************************************/
+//载入双天赋表
+//ientium@sina.com 小脏手修改
+//********************************************************************************************************************************
+void Player::_LoadTalents(QueryResult* result)
+{
+	// QueryResult *result = CharacterDatabase.PQuery("SELECT talent_id, current_rank, spec FROM character_talent WHERE guid = '%u'",GetGUIDLow());
+	if (result)
+	{
+		do
+		{
+			Field* fields = result->Fetch();
+
+			uint32 talent_id = fields[0].GetUInt32();
+			TalentEntry const* talentInfo = sTalentStore.LookupEntry(talent_id);
+
+			if (!talentInfo)
+			{
+				sLog.outError("Player::_LoadTalents:Player (GUID: %u) has invalid talent_id: %u , this talent will be deleted from character_talent", GetGUIDLow(), talent_id);
+				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE talent_id = '%u'", talent_id);
+				continue;
+			}
+
+			TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
+
+			if (!talentTabInfo)
+			{
+				sLog.outError("Player::_LoadTalents:Player (GUID: %u) has invalid talentTabInfo: %u for talentID: %u , this talent will be deleted from character_talent", GetGUIDLow(), talentInfo->TalentTab, talentInfo->TalentID);
+				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE talent_id = '%u'", talent_id);
+				continue;
+			}
+
+			// prevent load talent for different class (cheating)
+			if ((getClassMask() & talentTabInfo->ClassMask) == 0)
+			{
+				sLog.outError("Player::_LoadTalents:Player (GUID: %u) has talent with ClassMask: %u , but Player's ClassMask is: %u , talentID: %u , this talent will be deleted from character_talent", GetGUIDLow(), talentTabInfo->ClassMask, getClassMask(), talentInfo->TalentID);
+				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE guid = '%u' AND talent_id = '%u'", GetGUIDLow(), talent_id);
+				continue;
+			}
+
+			uint32 currentRank = fields[1].GetUInt32();
+
+			if (currentRank > MAX_TALENT_RANK || talentInfo->RankID[currentRank] == 0)
+			{
+				sLog.outError("Player::_LoadTalents:Player (GUID: %u) has invalid talent rank: %u , talentID: %u , this talent will be deleted from character_talent", GetGUIDLow(), currentRank, talentInfo->TalentID);
+				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE guid = '%u' AND talent_id = '%u'", GetGUIDLow(), talent_id);
+				continue;
+			}
+
+			uint32 spec = fields[2].GetUInt32();
+
+			if (spec > MAX_TALENT_SPEC_COUNT)
+			{
+				sLog.outError("Player::_LoadTalents:Player (GUID: %u) has invalid talent spec: %u, spec will be deleted from character_talent", GetGUIDLow(), spec);
+				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE spec = '%u' ", spec);
+				continue;
+			}
+
+			if (spec >= m_specsCount)
+			{
+				sLog.outError("Player::_LoadTalents:Player (GUID: %u) has invalid talent spec: %u , this spec will be deleted from character_talent.", GetGUIDLow(), spec);
+				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE guid = '%u' AND spec = '%u' ", GetGUIDLow(), spec);
+				continue;
+			}
+
+			if (m_activeSpec == spec)
+				addSpell(talentInfo->RankID[currentRank], true, false, false, false);
+			else
+			{
+				PlayerTalent talent;
+				talent.currentRank = currentRank;
+				talent.talentEntry = talentInfo;
+				talent.state = PLAYERSPELL_UNCHANGED;
+				m_talents[spec][talentInfo->TalentID] = talent;
+			}
+		} while (result->NextRow());
+		delete result;
+	}
+}
+void Player::_SaveTalents()
+{
+	static SqlStatementID delTalents;
+	static SqlStatementID insTalents;
+
+	SqlStatement stmtDel = CharacterDatabase.CreateStatement(delTalents, "DELETE FROM character_talent WHERE guid = ? and talent_id = ? and spec = ?");
+	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insTalents, "INSERT INTO character_talent (guid, talent_id, current_rank , spec) VALUES (?, ?, ?, ?)");
+
+	for (uint32 i = 0; i < MAX_TALENT_SPEC_COUNT; ++i)
+	{
+		for (PlayerTalentMap::iterator itr = m_talents[i].begin(); itr != m_talents[i].end();)
+		{
+			if (itr->second.state == PLAYERSPELL_REMOVED || itr->second.state == PLAYERSPELL_CHANGED)
+				stmtDel.PExecute(GetGUIDLow(), itr->first, i);
+
+			// add only changed/new talents
+			if (itr->second.state == PLAYERSPELL_NEW || itr->second.state == PLAYERSPELL_CHANGED)
+				stmtIns.PExecute(GetGUIDLow(), itr->first, itr->second.currentRank, i);
+
+			if (itr->second.state == PLAYERSPELL_REMOVED)
+				m_talents[i].erase(itr++);
+			else
+			{
+				itr->second.state = PLAYERSPELL_UNCHANGED;
+				++itr;
+			}
+		}
+	}
+}
+bool Player::HasTalent(uint32 spell, uint8 spec) const
+{
+	PlayerTalentMap::const_iterator itr = m_talents[spec].find(spell);
+	return (itr != m_talents[spec].end() && itr->second.state != PLAYERSPELL_REMOVED);
+}
+void Player::BuildPlayerTalentsInfoData(WorldPacket* data)
+{
+	*data << uint32(GetFreeTalentPoints());                 // unspentTalentPoints
+	*data << uint8(m_specsCount);                           // talent group count (0, 1 or 2)
+	*data << uint8(m_activeSpec);                           // talent group index (0 or 1)
+
+	if (m_specsCount)
+	{
+		// loop through all specs (only 1 for now)
+		for (uint32 specIdx = 0; specIdx < m_specsCount; ++specIdx)
+		{
+			uint8 talentIdCount = 0;
+			size_t pos = data->wpos();
+			*data << uint8(talentIdCount);                  // [PH], talentIdCount
+
+															// find class talent tabs (all players have 3 talent tabs)
+			uint32 const* talentTabIds = GetTalentTabPages(getClass());
+
+			for (uint32 i = 0; i < 3; ++i)
+			{
+				uint32 talentTabId = talentTabIds[i];
+				for (PlayerTalentMap::iterator iter = m_talents[specIdx].begin(); iter != m_talents[specIdx].end(); ++iter)
+				{
+					PlayerTalent talent = (*iter).second;
+
+					if (talent.state == PLAYERSPELL_REMOVED)
+						continue;
+
+					// skip another tab talents
+					if (talent.talentEntry->TalentTab != talentTabId)
+						continue;
+
+					*data << uint32(talent.talentEntry->TalentID);  // Talent.dbc
+					*data << uint8(talent.currentRank);     // talentMaxRank (0-4)
+
+					++talentIdCount;
+				}
+			}
+
+			data->put<uint8>(pos, talentIdCount);           // put real count
+
+			
+		}
+	}
+}
+void Player::SendTalentsInfoData(bool pet)
+{
+	WorldPacket data(SMSG_TALENT_UPDATE, 50);
+	data << uint8(pet ? 1 : 0);
+	BuildPlayerTalentsInfoData(&data);
+	GetSession()->SendPacket(&data);
+}
+PlayerTalent const* Player::GetKnownTalentById(int32 talentId) const
+{
+	PlayerTalentMap::const_iterator itr = m_talents[m_activeSpec].find(talentId);
+	if (itr != m_talents[m_activeSpec].end() && itr->second.state != PLAYERSPELL_REMOVED)
+		return &itr->second;
+	else
+		return NULL;
+}
+
+/*SpellEntry const* Player::GetKnownTalentRankById(int32 talentId) const
+{
+	if (PlayerTalent const* talent = GetKnownTalentById(talentId))
+		return sSpellStore.LookupEntry(talent->talentEntry->RankID[talent->currentRank]);
+	else
+		return NULL;
+}*/
