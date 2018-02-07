@@ -184,7 +184,42 @@ bool ChatHandler::HandleDismountCommand(char* /*args*/)
     m_session->GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
     return true;
 }
+//************************************************************************************
+//天赋切换
+//ientium@sina.com 小脏手修改
+bool ChatHandler::HandleTF1Command(char* /*args*/)
+{
+	Player* player = m_session->GetPlayer();
 
+	// save GM account without delay and output message (testing, etc)
+	if (GetAccessLevel() > SEC_PLAYER)
+	{
+		player->SendResetTalentsInfoData(1);
+		player->m_activeSpec = 0;
+		player->BuildPlayerTalentsInfoData(0);
+
+	}
+
+	return true;
+}
+bool ChatHandler::HandleTF2Command(char* /*args*/)
+{
+	Player* player = m_session->GetPlayer();
+
+	// save GM account without delay and output message (testing, etc)
+	if (GetAccessLevel() > SEC_PLAYER)
+	{
+		
+		if(player->m_specsCount>1){
+			player->SendResetTalentsInfoData(0);
+			player->m_activeSpec = 0;
+			player->BuildPlayerTalentsInfoData(1);
+		}
+	}
+
+	return true;
+}
+//************************************************************************************
 bool ChatHandler::HandleSaveCommand(char* /*args*/)
 {
     Player *player = m_session->GetPlayer();

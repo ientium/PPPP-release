@@ -975,6 +975,13 @@ class MANGOS_DLL_SPEC Player final: public Unit
 
 		bool UpdateEXInfo();  //更新查询信息  
 //**********************************************************************************************************************************
+//*****************************************************************************************************************************
+//双天赋修改
+//ientium@sina.com 小脏手
+		PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
+		uint8 m_activeSpec;
+		uint8 m_specsCount;
+		//*****************************************************************************************************************************
 		void SummonIfPossible(bool agree);
 
         bool Create( uint32 guidlow, const std::string& name, uint8 race, uint8 class_, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair, uint8 outfitId );
@@ -1535,19 +1542,20 @@ class MANGOS_DLL_SPEC Player final: public Unit
         uint32 GetFreeTalentPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS1); }
         void SetFreeTalentPoints(uint32 points) { SetUInt32Value(PLAYER_CHARACTER_POINTS1,points); }
         void UpdateFreeTalentPoints(bool resetIfNeed = true);
+		
         bool resetTalents(bool no_cost = false);
         uint32 resetTalentsCost();
         void updateResetTalentsMultiplier();
 
-		void SendTalentsInfoData(bool pet);
-		void BuildPlayerTalentsInfoData(WorldPacket* data);
+		bool SendResetTalentsInfoData(uint8 spec);
+		void BuildPlayerTalentsInfoData(uint8 spec);
 		bool HasTalent(uint32 spell_id, uint8 spec) const;
 
 		PlayerTalent const* GetKnownTalentById(int32 talentId) const;
 		//SpellEntry const* GetKnownTalentRankById(int32 talentId) const;
 
         void InitTalentForLevel();
-        void LearnTalent(uint32 talentId, uint32 talentRank);
+        void LearnTalent(uint32 talentId, uint32 talentRank);   //学习技能
         uint32 CalculateTalentsPoints() const;
 
         uint32 GetFreePrimaryProfessionPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS2); }
@@ -2414,13 +2422,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
         SpellModList m_spellMods[MAX_SPELLMOD];
         EnchantDurationList m_enchantDuration;
         ItemDurationList m_itemDuration;
-//*****************************************************************************************************************************
-//双天赋修改
-//ientium@sina.com 小脏手
-		PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
-		uint8 m_activeSpec;
-		uint8 m_specsCount;
-//*****************************************************************************************************************************
+
 
         ObjectGuid m_resurrectGuid;
         uint32 m_resurrectMap;

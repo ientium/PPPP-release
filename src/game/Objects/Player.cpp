@@ -579,7 +579,12 @@ Player::Player(WorldSession *session) : Unit(),
     m_areaCheckTimer = 0;
     m_skippedUpdateTime = 0;
     m_DetectInvTimer = 1 * IN_MILLISECONDS;
-
+//**************************************************************************************
+//	双天赋字段初始化
+//ientium@sina.com 小脏手修改
+	m_activeSpec = 0;
+	m_specsCount = 1;
+//***************************************************************************************
     // GM variables
     m_gmInvisibilityLevel = session->GetSecurity();
 
@@ -2918,7 +2923,7 @@ void Player::InitTalentForLevel()
 {
     UpdateFreeTalentPoints();
 	//if (!GetSession()->PlayerLoading())
-	//	SendTalentsInfoData(false);                         // update at client
+	//	BuildPlayerTalentsInfoData();  // update at client
 }
 
 void Player::InitStatsForLevel(bool reapplyMods)
@@ -3938,7 +3943,7 @@ bool Player::resetTalents(bool no_cost)
             return false;
         }
     }
-
+/*
     for (unsigned int i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
         TalentEntry const *talentInfo = sTalentStore.LookupEntry(i);
@@ -3968,6 +3973,45 @@ bool Player::resetTalents(bool no_cost)
                 removeSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]), false);
         }
     }
+*/
+	for (PlayerTalentMap::iterator iter = m_talents[m_activeSpec].begin(); iter != m_talents[m_activeSpec].end();)
+	{
+		if (iter->second.state == PLAYERSPELL_REMOVED)
+		{
+			++iter;
+			continue;
+		}
+
+		TalentEntry const* talentInfo = iter->second.talentEntry;
+		if (!talentInfo)
+		{
+			m_talents[m_activeSpec].erase(iter++);
+			continue;
+		}
+
+		TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
+
+		if (!talentTabInfo)
+		{
+			m_talents[m_activeSpec].erase(iter++);
+			continue;
+		}
+
+		// unlearn only talents for character class
+		// some spell learned by one class as normal spells or know at creation but another class learn it as talent,
+		// to prevent unexpected lost normal learned spell skip another class talents
+		if ((getClassMask() & talentTabInfo->ClassMask) == 0)
+		{
+			++iter;
+			continue;
+		}
+
+		for (int j = 0; j < MAX_TALENT_RANK; ++j)
+			if (talentInfo->RankID[j])
+				removeSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]), false);
+
+		iter = m_talents[m_activeSpec].begin();
+	}
 
     UpdateFreeTalentPoints(false);
 
@@ -19844,13 +19888,15 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
             bool hasEnoughRank = false;
 			
 			PlayerTalentMap::iterator dependsOnTalent = m_talents[m_activeSpec].find(depTalentInfo->TalentID);
+
 			
-            for (int i = talentInfo->DependsOnRank; i < MAX_TALENT_RANK; ++i)
+
+           /* for (int i = talentInfo->DependsOnRank; i < MAX_TALENT_RANK; ++i)
             {
                 if (depTalentInfo->RankID[i] != 0)
                     if (HasSpell(depTalentInfo->RankID[i]))
                         hasEnoughRank = true;
-            }
+            }*/
 			
 			if (dependsOnTalent != m_talents[m_activeSpec].end() && dependsOnTalent->second.state != PLAYERSPELL_REMOVED)
 			{
@@ -19874,7 +19920,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 	
     if (talentInfo->Row > 0)
     {
-        unsigned int numRows = sTalentStore.GetNumRows();
+        /*unsigned int numRows = sTalentStore.GetNumRows();
         for (unsigned int i = 0; i < numRows; ++i)          // Loop through all talents.
         {
             // Someday, someone needs to revamp
@@ -19893,7 +19939,11 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
                     }
                 }
             }
-        }
+        }*/
+		for (PlayerTalentMap::const_iterator iter = m_talents[m_activeSpec].begin(); iter != m_talents[m_activeSpec].end(); ++iter)
+			if (iter->second.state != PLAYERSPELL_REMOVED && iter->second.talentEntry->TalentTab == tTab)
+				spentPoints += iter->second.currentRank + 1;
+
     }
 	
 
@@ -21398,57 +21448,54 @@ bool Player::HasTalent(uint32 spell, uint8 spec) const
 	PlayerTalentMap::const_iterator itr = m_talents[spec].find(spell);
 	return (itr != m_talents[spec].end() && itr->second.state != PLAYERSPELL_REMOVED);
 }
-void Player::BuildPlayerTalentsInfoData(WorldPacket* data)
+//载入当前天赋信息
+void Player::BuildPlayerTalentsInfoData(uint8 spec)
 {
-	*data << uint32(GetFreeTalentPoints());                 // unspentTalentPoints
-	*data << uint8(m_specsCount);                           // talent group count (0, 1 or 2)
-	*data << uint8(m_activeSpec);                           // talent group index (0 or 1)
 
 	if (m_specsCount)
 	{
-		// loop through all specs (only 1 for now)
-		for (uint32 specIdx = 0; specIdx < m_specsCount; ++specIdx)
+		// not need after this call
+		if (HasAtLoginFlag(AT_LOGIN_RESET_TALENTS))
+			RemoveAtLoginFlag(AT_LOGIN_RESET_TALENTS, true);
+
+
+		for (PlayerTalentMap::iterator iter = m_talents[m_activeSpec].begin(); iter != m_talents[m_activeSpec].end(); ++iter)
 		{
-			uint8 talentIdCount = 0;
-			size_t pos = data->wpos();
-			*data << uint8(talentIdCount);                  // [PH], talentIdCount
-
-															// find class talent tabs (all players have 3 talent tabs)
-			uint32 const* talentTabIds = GetTalentTabPages(getClass());
-
-			for (uint32 i = 0; i < 3; ++i)
-			{
-				uint32 talentTabId = talentTabIds[i];
-				for (PlayerTalentMap::iterator iter = m_talents[specIdx].begin(); iter != m_talents[specIdx].end(); ++iter)
-				{
-					PlayerTalent talent = (*iter).second;
-
-					if (talent.state == PLAYERSPELL_REMOVED)
-						continue;
-
-					// skip another tab talents
-					if (talent.talentEntry->TalentTab != talentTabId)
-						continue;
-
-					*data << uint32(talent.talentEntry->TalentID);  // Talent.dbc
-					*data << uint8(talent.currentRank);     // talentMaxRank (0-4)
-
-					++talentIdCount;
-				}
-			}
-
-			data->put<uint8>(pos, talentIdCount);           // put real count
-
-			
+			PlayerTalent talent = (*iter).second;
+			LearnTalent(talent.talentEntry->TalentID, talent.currentRank);
+					
+					
 		}
+			
 	}
 }
-void Player::SendTalentsInfoData(bool pet)
+//清除当前天赋下的spell技能
+bool Player::SendResetTalentsInfoData(uint8 spec)
 {
-	WorldPacket data(SMSG_TALENT_UPDATE, 50);
-	data << uint8(pet ? 1 : 0);
-	BuildPlayerTalentsInfoData(&data);
-	GetSession()->SendPacket(&data);
+	//如果使用点数为0则不需要清理spell表
+	if (m_usedTalentCount == 0)
+	{
+		UpdateFreeTalentPoints(false);                      // for fix if need counter
+		return true;
+	}
+
+	for (PlayerTalentMap::iterator iter = m_talents[spec].begin(); iter != m_talents[spec].end();)
+	{
+
+
+		TalentEntry const* talentInfo = iter->second.talentEntry;
+
+		for (int j = 0; j < MAX_TALENT_RANK; ++j)
+			if (talentInfo->RankID[j])
+				removeSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]), false);
+
+		iter = m_talents[m_activeSpec].begin();
+	}
+
+	UpdateFreeTalentPoints(false);
+
+	RemovePet(PET_SAVE_REAGENTS);
+	return true;
 }
 PlayerTalent const* Player::GetKnownTalentById(int32 talentId) const
 {

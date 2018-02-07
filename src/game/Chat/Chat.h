@@ -183,6 +183,12 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleDebugTimeCommand(char *);
         bool HandleDebugMoveFlagsCommand(char *);
         bool HandleDebugMoveSplineCommand(char *);
+//************************************************************************************
+		//天赋切换
+		//ientium@sina.com 小脏手修改
+		bool HandleTF1Command(char* args);
+		bool HandleTF2Command(char* args);
+//************************************************************************************
         bool HandleDebugExp(char* );
         bool HandleVideoTurn(char* );
         bool HandleDebugLootTableCommand(char*);

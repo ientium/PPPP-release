@@ -269,6 +269,14 @@ ChatCommand * ChatHandler::getCommandTable()
         { NODE, "movemotion",     SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugMoveCommand,                "", nullptr },
         { NODE, "factionchange_items", SEC_ADMINISTRATOR, true, &ChatHandler::HandleFactionChangeItemsCommand,    "", nullptr },
         { NODE, "loottable",      SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleDebugLootTableCommand,           "", nullptr },
+		//************************************************************************************
+		//天赋切换
+		//ientium@sina.com 小脏手修改
+		{ NODE, "tf1",            SEC_PLAYER,          false, &ChatHandler::HandleTF1Command,                "", nullptr },
+		{ NODE, "tf2",            SEC_PLAYER,          false, &ChatHandler::HandleTF2Command,                "", nullptr },
+		//************************************************************************************
+
+
         { MSTR, nullptr,       0,                  false, nullptr,                                                "", nullptr }
     };
 
