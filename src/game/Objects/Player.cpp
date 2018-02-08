@@ -3320,7 +3320,7 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 		else if (uint32 prev_spell = sSpellMgr.GetPrevSpellInChain(spell_id))
 		{
 			if (!IsInWorld() || disabled)                   // at spells loading, no output, but allow save
-				addSpell(prev_spell, active, true, true, disabled);
+				addTalentSpell(prev_spell, active, true, true, disabled);
 			else                                            // at normal learning
 				learnSpell(prev_spell, true);
 		}
@@ -3407,7 +3407,7 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 
 		// update used talent points count
 		m_usedTalentCount += GetTalentSpellCost(talentPos);
-		UpdateFreeTalentPoints(false);
+
 	}
 
 	// update free primary prof.points (if any, can be none in case GM .learn prof. learning)
@@ -4141,15 +4141,16 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 	PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 	if (itr == m_spells.end())
 		return;
-
+	DETAIL_LOG("当前天赋技能数量运行中后11111111");
 	if (itr->second.state == PLAYERSPELL_REMOVED || (disabled && itr->second.disabled))
 		return;
+
 
 	// unlearn non talent higher ranks (recursive)
 	SpellChainMapNext const& nextMap = sSpellMgr.GetSpellChainNext();
 	for (SpellChainMapNext::const_iterator itr2 = nextMap.lower_bound(spell_id); itr2 != nextMap.upper_bound(spell_id); ++itr2)
 		if (HasSpell(itr2->second) && !GetTalentSpellPos(itr2->second))
-			removeSpell(itr2->second, disabled, false);
+			removeTalentSpell(itr2->second, disabled, false);
 
 	// re-search, it can be corrupted in prev loop
 	itr = m_spells.find(spell_id);
@@ -4182,19 +4183,17 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 	TalentSpellPos const* talentPos = GetTalentSpellPos(spell_id);
 	if (talentPos)
 	{
-		// update talent map
+		
 		PlayerTalentMap::iterator iter = m_talents[m_activeSpec].find(talentPos->talent_id);
 		if (iter != m_talents[m_activeSpec].end())
 		{
 			if ((*iter).second.state != PLAYERSPELL_NEW)
 				(*iter).second.state = PLAYERSPELL_REMOVED;
 			
+
 		}
 		else
 			sLog.outError("removeSpell: Player (GUID: %u) has talent spell (id: %u) but doesn't have talent", GetGUIDLow(), spell_id);
-
-
-
 		// free talent points
 		uint32 talentCosts = GetTalentSpellCost(talentPos);
 
@@ -4205,7 +4204,8 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 
 		UpdateFreeTalentPoints(false);
 	}
-
+	
+	DETAIL_LOG("当前天赋技能数量运行中后 %u", m_talents[m_activeSpec].size());
 	// update free primary prof.points (if not overflow setting, can be in case GM use before .learn prof. learning)
 	if (sSpellMgr.IsPrimaryProfessionFirstRankSpell(spell_id))
 	{
@@ -4291,7 +4291,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 	SpellLearnSpellMapBounds spell_bounds = sSpellMgr.GetSpellLearnSpellMapBounds(spell_id);
 
 	for (SpellLearnSpellMap::const_iterator itr2 = spell_bounds.first; itr2 != spell_bounds.second; ++itr2)
-		removeSpell(itr2->second.spell, disabled);
+		removeTalentSpell(itr2->second.spell, disabled);
 
 	// activate lesser rank in spellbook/action bar, and cast it if need
 	bool prev_activate = false;
@@ -22000,7 +22000,7 @@ void Player::_LoadTalents(QueryResult* result)
 				talent.talentEntry = talentInfo;
 				talent.state = PLAYERSPELL_UNCHANGED;
 				m_talents[spec][talentInfo->TalentID] = talent;
-				sLog.outDetail("载入未使用的天赋信息 TalentID %u ", talentInfo->TalentID);
+				DETAIL_LOG("载入未使用的天赋信息 TalentID %u ", talentInfo->TalentID);
 			}
 		} while (result->NextRow());
 		
@@ -22055,11 +22055,13 @@ void Player::BuildPlayerTalentsInfoData(uint8 spec)
 		{
 			PlayerTalent talent = (*iter).second;
 			TalentEntry const* talentInfo = iter->second.talentEntry;
-			//LearnTalent(talent.talentEntry->TalentID, talent.currentRank);
-			sLog.outDetail("学习技能 %u ", talentInfo->TalentID);
+		
+			DETAIL_LOG("学习技能 %u ", talentInfo->TalentID);
 			addTalentSpell(talentInfo->RankID[talent.currentRank], true, false, false, false);
 					
 		}
+		uint32 talentPointsForLevel = CalculateTalentsPoints();
+		SetFreeTalentPoints(talentPointsForLevel - m_usedTalentCount);
 			
 	}
 }
@@ -22072,58 +22074,23 @@ bool Player::SendResetTalentsInfoData(uint8 spec)
 		UpdateFreeTalentPoints(false);                      // for fix if need counter
 		return true;
 	}
-
+	DETAIL_LOG("当前天赋使用技能点 %u", m_usedTalentCount);
 	for (PlayerTalentMap::iterator iter = m_talents[m_activeSpec].begin(); iter != m_talents[m_activeSpec].end();)
 	{
-		if (iter->second.state == PLAYERSPELL_REMOVED)
-		{
-			++iter;
-			continue;
-		}
 
 		TalentEntry const* talentInfo = iter->second.talentEntry;
-		if (!talentInfo)
-		{
-			m_talents[m_activeSpec].erase(iter++);
-			continue;
-		}
-
-		TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
-
-		if (!talentTabInfo)
-		{
-			m_talents[m_activeSpec].erase(iter++);
-			continue;
-		}
-
-		// unlearn only talents for character class
-		// some spell learned by one class as normal spells or know at creation but another class learn it as talent,
-		// to prevent unexpected lost normal learned spell skip another class talents
-		if ((getClassMask() & talentTabInfo->ClassMask) == 0)
-		{
-			++iter;
-			continue;
-		}
-
 		for (int j = 0; j < MAX_TALENT_RANK; ++j) {
-			SpellEntry const* pInfos = sSpellMgr.GetSpellEntry(talentInfo->RankID[j]);
-			if (pInfos)
-				for (uint32 eff = 0; eff < 3; ++eff)
-					if (pInfos->EffectTriggerSpell[eff])
-						RemoveAurasDueToSpell(pInfos->EffectTriggerSpell[eff]);
-
 			if (talentInfo->RankID[j])
 				removeTalentSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]), false);
 			
 		}
 		iter = m_talents[m_activeSpec].begin();
 	}
-	sLog.outDetail("当前天赋技能数量 %u ", m_talents[m_activeSpec].size());
-	
-
 	UpdateFreeTalentPoints(false);
-
+	
+	DETAIL_LOG("当前天赋技能数量运行最后 %u", m_talents[m_activeSpec].size());
 	RemovePet(PET_SAVE_REAGENTS);
+	
 	return true;
 }
 PlayerTalent const* Player::GetKnownTalentById(int32 talentId) const
