@@ -101,7 +101,7 @@ void TransportMgr::LoadTransportNPCTemplate(uint32 entry,TransportTemplate* tran
 
 	if (!result)
 	{
-		sLog.outString(">> Loaded 0 transport_npc templates. DB table `ransport_exinfo` has no transports!");
+		sLog.outString(">> Loaded  0 transport_npc templates. DB table `transport_exinfo` has no transports!");
 		return;
 	}
 

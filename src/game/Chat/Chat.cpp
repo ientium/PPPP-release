@@ -272,8 +272,8 @@ ChatCommand * ChatHandler::getCommandTable()
 		//************************************************************************************
 		//天赋切换
 		//ientium@sina.com 小脏手修改
-		{ NODE, "tf1",            SEC_PLAYER,          false, &ChatHandler::HandleTF1Command,                "", nullptr },
-		{ NODE, "tf2",            SEC_PLAYER,          false, &ChatHandler::HandleTF2Command,                "", nullptr },
+		{ NODE, "tf1",            SEC_PLAYER,          true, &ChatHandler::HandleDebugTF1Command,                "", nullptr },
+		{ NODE, "tf2",            SEC_PLAYER,          true, &ChatHandler::HandleDebugTF2Command,                "", nullptr },
 		//************************************************************************************
 
 

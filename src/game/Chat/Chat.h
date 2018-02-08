@@ -186,8 +186,8 @@ class MANGOS_DLL_SPEC ChatHandler
 //************************************************************************************
 		//天赋切换
 		//ientium@sina.com 小脏手修改
-		bool HandleTF1Command(char* args);
-		bool HandleTF2Command(char* args);
+		bool HandleDebugTF1Command(char* args);
+		bool HandleDebugTF2Command(char* args);
 //************************************************************************************
         bool HandleDebugExp(char* );
         bool HandleVideoTurn(char* );

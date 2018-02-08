@@ -187,33 +187,38 @@ bool ChatHandler::HandleDismountCommand(char* /*args*/)
 //************************************************************************************
 //天赋切换
 //ientium@sina.com 小脏手修改
-bool ChatHandler::HandleTF1Command(char* /*args*/)
+bool ChatHandler::HandleDebugTF1Command(char* /*args*/)
 {
 	Player* player = m_session->GetPlayer();
 
 	// save GM account without delay and output message (testing, etc)
-	if (GetAccessLevel() > SEC_PLAYER)
+	if (GetAccessLevel() >= SEC_PLAYER)
 	{
 		player->SendResetTalentsInfoData(1);
 		player->m_activeSpec = 0;
 		player->BuildPlayerTalentsInfoData(0);
-
+		SendSysMessage("切换天赋1 ");
+		
+		sLog.outDetail("Player %s (guid %u) 切换为天赋1.", player->GetName(), player->GetGUIDLow());
 	}
 
 	return true;
 }
-bool ChatHandler::HandleTF2Command(char* /*args*/)
+bool ChatHandler::HandleDebugTF2Command(char* /*args*/)
 {
 	Player* player = m_session->GetPlayer();
-
+	sLog.outDetail("Player %s (guid %u) 的天赋数量为 %u. 用户等级为 %u ", player->GetName(), player->GetGUIDLow(), player->m_specsCount, GetAccessLevel());
 	// save GM account without delay and output message (testing, etc)
-	if (GetAccessLevel() > SEC_PLAYER)
+	if (GetAccessLevel() >= SEC_PLAYER)
 	{
 		
 		if(player->m_specsCount>1){
 			player->SendResetTalentsInfoData(0);
-			player->m_activeSpec = 0;
+			player->m_activeSpec = 1;
 			player->BuildPlayerTalentsInfoData(1);
+			SendSysMessage("切换天赋2 ");
+
+			sLog.outDetail("Player %s (guid %u) 切换为天赋2.", player->GetName(), player->GetGUIDLow());
 		}
 	}
 
