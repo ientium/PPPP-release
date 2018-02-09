@@ -1546,18 +1546,21 @@ class MANGOS_DLL_SPEC Player final: public Unit
         bool resetTalents(bool no_cost = false);
         uint32 resetTalentsCost();
         void updateResetTalentsMultiplier();
-
-		bool ResetTalentsInfoData(uint8 spec);
-		void BuildPlayerTalentsInfoData(uint8 spec);
-
-		void removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t_activeTalenet, bool learn_low_rank = true);//删除技能不清除天赋列表
+//*************************************************************************************************************************************
+//双天赋切换信息
+//ientium@sina.com 小脏手修改
+		bool ResetTalentsInfoData(uint8 spec);    //删除切换前的天赋技能技能
+		void BuildPlayerTalentsInfoData(uint8 spec);  //添加切换后的天赋技能
+//*************************************************************************************************************************************
+		void removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& t_activeTalenet, bool learn_low_rank = true);//删除技能不清除天赋列表
 		bool addTalentSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);//添加技能不清除天赋列表
 		bool HasTalent(uint32 spell_id, uint8 spec) const;
 
 		PlayerTalent const* GetKnownTalentById(int32 talentId) const;
-		//SpellEntry const* GetKnownTalentRankById(int32 talentId) const;
+
 
         void InitTalentForLevel();
+
         void LearnTalent(uint32 talentId, uint32 talentRank);   //学习技能
         uint32 CalculateTalentsPoints() const;
 

@@ -4136,7 +4136,7 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
 //*******************************************************************************************************************
 //删除技能不清除天赋列表
 //ientium@sina.com 小脏手修改
-void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t_activeTalenet, bool learn_low_rank)
+void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& t_activeTalenet, bool learn_low_rank)
 {
 	PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 	if (itr == m_spells.end())
@@ -4184,8 +4184,8 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t
 	if (talentPos)
 	{
 		
-		PlayerTalentMap::iterator iter = m_talents[m_activeSpec].find(talentPos->talent_id);
-		if (iter != m_talents[m_activeSpec].end())
+		PlayerTalentMap::iterator iter = t_activeTalenet.find(talentPos->talent_id);
+		if (iter != t_activeTalenet.end())
 		{
 			if ((*iter).second.state != PLAYERSPELL_NEW)
 				(*iter).second.state = PLAYERSPELL_REMOVED;
@@ -4196,6 +4196,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t
 		else
 			sLog.outError("removeSpell: Player (GUID: %u) has talent spell (id: %u) but doesn't have talent", GetGUIDLow(), spell_id);
 		// free talent points
+
 		uint32 talentCosts = GetTalentSpellCost(talentPos);
 
 		if (talentCosts < m_usedTalentCount)
@@ -4203,7 +4204,10 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t
 		else
 			m_usedTalentCount = 0;
 
-		UpdateFreeTalentPoints(false);
+
+		SetFreeTalentPoints(CalculateTalentsPoints() - m_usedTalentCount);
+
+		
 	}
 	
 	DETAIL_LOG("当前天赋技能数量运行中后 %u", m_talents[m_activeSpec].size());
@@ -4324,7 +4328,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t
 				// now re-learn if need re-activate
 				if (cur_active && !prev_itr->second.active && learn_low_rank)
 				{
-					if (addSpell(prev_id, true, false, prev_itr->second.dependent, prev_itr->second.disabled))
+					if (addTalentSpell(prev_id, true, false, prev_itr->second.dependent, prev_itr->second.disabled))
 					{
 						// downgrade spell ranks in spellbook and action bar
 						WorldPacket data(SMSG_SUPERCEDED_SPELL, (4));
@@ -20555,8 +20559,11 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
         return;
 
     // learn! (other talent ranks will unlearned at learning)
-    learnSpell(spellid, false);
-    DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+
+
+		learnSpell(spellid, false);
+		DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+	
 }
 
 
@@ -22058,8 +22065,16 @@ void Player::BuildPlayerTalentsInfoData(uint8 spec)
 			TalentEntry const* talentInfo = iter->second.talentEntry;
 		
 			DETAIL_LOG("学习技能 %u ", talentInfo->TalentID);
-			addTalentSpell(talentInfo->RankID[talent.currentRank], true, false, false, false);
-					
+			uint32 spellid = talentInfo->RankID[talent.currentRank];
+			uint32 learning = addTalentSpell(spellid, true, false, false, false);
+			//更新天赋表单
+			if (learning && IsInWorld())
+			{
+				WorldPacket data(SMSG_LEARNED_SPELL, 4);
+				data << uint32(spellid);
+				GetSession()->SendPacket(&data);
+			}
+
 		}
 		uint32 talentPointsForLevel = CalculateTalentsPoints();
 		SetFreeTalentPoints(talentPointsForLevel - m_usedTalentCount);
@@ -22075,21 +22090,58 @@ bool Player::ResetTalentsInfoData(uint8 spec)
 		UpdateFreeTalentPoints(false);                      // for fix if need counter
 		return true;
 	}
-	DETAIL_LOG("当前天赋使用技能点 %u", m_usedTalentCount);
-	PlayerTalentMap t_activeTalenet = m_talents[m_activeSpec];
-	for (PlayerTalentMap::iterator iter = t_activeTalenet.begin(); iter != t_activeTalenet.end();)
+	
+	PlayerTalentMap tactiveTalenet = m_talents[m_activeSpec];
+
+
+
+	DETAIL_LOG("当前天赋技能数量 %u", tactiveTalenet.size());
+	for (PlayerTalentMap::iterator iter = tactiveTalenet.begin(); iter != tactiveTalenet.end();)
 	{
 
+	
+		if (iter->second.state == PLAYERSPELL_REMOVED)
+		{
+			++iter;
+			continue;
+		}
+
 		TalentEntry const* talentInfo = iter->second.talentEntry;
+		if (!talentInfo)
+		{
+			tactiveTalenet.erase(iter++);
+			continue;
+		}
+
+		TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
+
+		if (!talentTabInfo)
+		{
+			tactiveTalenet.erase(iter++);
+			continue;
+		}
+
+		// unlearn only talents for character class
+		// some spell learned by one class as normal spells or know at creation but another class learn it as talent,
+		// to prevent unexpected lost normal learned spell skip another class talents
+		if ((getClassMask() & talentTabInfo->ClassMask) == 0)
+		{
+			++iter;
+			continue;
+		}
+
+
+		
 		for (int j = 0; j < MAX_TALENT_RANK; ++j) {
 			if (talentInfo->RankID[j])
-				removeTalentSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]),t_activeTalenet, false);
+				removeTalentSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]),tactiveTalenet, false);
 			
 		}
-		//iter = m_talents[m_activeSpec].begin();
+		iter = tactiveTalenet.begin();
 	}
-	UpdateFreeTalentPoints(false);
 	
+	
+
 	DETAIL_LOG("当前天赋技能数量运行最后 %u", m_talents[m_activeSpec].size());
 	RemovePet(PET_SAVE_REAGENTS);
 	
