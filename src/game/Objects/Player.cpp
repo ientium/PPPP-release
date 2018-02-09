@@ -3312,7 +3312,7 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 					if (!rankSpellId || rankSpellId == spell_id)
 						continue;
 
-					removeTalentSpell(rankSpellId, false, false);
+					removeTalentSpell(rankSpellId, false, m_talents[m_activeSpec],false);
 				}
 			}
 		}
@@ -4136,7 +4136,7 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
 //*******************************************************************************************************************
 //删除技能不清除天赋列表
 //ientium@sina.com 小脏手修改
-void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
+void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t_activeTalenet, bool learn_low_rank)
 {
 	PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 	if (itr == m_spells.end())
@@ -4150,7 +4150,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 	SpellChainMapNext const& nextMap = sSpellMgr.GetSpellChainNext();
 	for (SpellChainMapNext::const_iterator itr2 = nextMap.lower_bound(spell_id); itr2 != nextMap.upper_bound(spell_id); ++itr2)
 		if (HasSpell(itr2->second) && !GetTalentSpellPos(itr2->second))
-			removeTalentSpell(itr2->second, disabled, false);
+			removeTalentSpell(itr2->second, disabled, t_activeTalenet, false);
 
 	// re-search, it can be corrupted in prev loop
 	itr = m_spells.find(spell_id);
@@ -4190,7 +4190,8 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 			if ((*iter).second.state != PLAYERSPELL_NEW)
 				(*iter).second.state = PLAYERSPELL_REMOVED;
 			
-
+			else
+				t_activeTalenet.erase(iter);
 		}
 		else
 			sLog.outError("removeSpell: Player (GUID: %u) has talent spell (id: %u) but doesn't have talent", GetGUIDLow(), spell_id);
@@ -4291,7 +4292,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_ra
 	SpellLearnSpellMapBounds spell_bounds = sSpellMgr.GetSpellLearnSpellMapBounds(spell_id);
 
 	for (SpellLearnSpellMap::const_iterator itr2 = spell_bounds.first; itr2 != spell_bounds.second; ++itr2)
-		removeTalentSpell(itr2->second.spell, disabled);
+		removeTalentSpell(itr2->second.spell, disabled, t_activeTalenet);
 
 	// activate lesser rank in spellbook/action bar, and cast it if need
 	bool prev_activate = false;
@@ -22066,7 +22067,7 @@ void Player::BuildPlayerTalentsInfoData(uint8 spec)
 	}
 }
 //清除当前天赋下的spell技能
-bool Player::SendResetTalentsInfoData(uint8 spec)
+bool Player::ResetTalentsInfoData(uint8 spec)
 {
 	//如果使用点数为0则不需要清理spell表
 	if (m_usedTalentCount == 0)
@@ -22075,16 +22076,17 @@ bool Player::SendResetTalentsInfoData(uint8 spec)
 		return true;
 	}
 	DETAIL_LOG("当前天赋使用技能点 %u", m_usedTalentCount);
-	for (PlayerTalentMap::iterator iter = m_talents[m_activeSpec].begin(); iter != m_talents[m_activeSpec].end();)
+	PlayerTalentMap t_activeTalenet = m_talents[m_activeSpec];
+	for (PlayerTalentMap::iterator iter = t_activeTalenet.begin(); iter != t_activeTalenet.end();)
 	{
 
 		TalentEntry const* talentInfo = iter->second.talentEntry;
 		for (int j = 0; j < MAX_TALENT_RANK; ++j) {
 			if (talentInfo->RankID[j])
-				removeTalentSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]), false);
+				removeTalentSpell(talentInfo->RankID[j], !IsPassiveSpell(talentInfo->RankID[j]),t_activeTalenet, false);
 			
 		}
-		iter = m_talents[m_activeSpec].begin();
+		//iter = m_talents[m_activeSpec].begin();
 	}
 	UpdateFreeTalentPoints(false);
 	

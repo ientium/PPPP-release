@@ -1547,10 +1547,10 @@ class MANGOS_DLL_SPEC Player final: public Unit
         uint32 resetTalentsCost();
         void updateResetTalentsMultiplier();
 
-		bool SendResetTalentsInfoData(uint8 spec);
+		bool ResetTalentsInfoData(uint8 spec);
 		void BuildPlayerTalentsInfoData(uint8 spec);
 
-		void removeTalentSpell(uint32 spell_id, bool disabled, bool learn_low_rank = true);//删除技能不清除天赋列表
+		void removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap t_activeTalenet, bool learn_low_rank = true);//删除技能不清除天赋列表
 		bool addTalentSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);//添加技能不清除天赋列表
 		bool HasTalent(uint32 spell_id, uint8 spec) const;
 
