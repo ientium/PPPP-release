@@ -3208,7 +3208,7 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 				}
 			}
 		}
-
+		//无任何变动技能
 		// not do anything if already known in expected state
 		if (itr->second.state != PLAYERSPELL_REMOVED && itr->second.active == active &&
 			itr->second.dependent == dependent && itr->second.disabled == disabled)
@@ -3218,7 +3218,9 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 
 			return false;
 		}
-
+		if (spell_id == 13033) {
+			DETAIL_LOG("打印测试点state %u",itr->second.state);
+		}
 		// dependent spell known as not dependent, overwrite state
 		if (itr->second.state != PLAYERSPELL_REMOVED && !itr->second.dependent && dependent)
 		{
@@ -3322,9 +3324,12 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 			if (!IsInWorld() || disabled)                   // at spells loading, no output, but allow save
 				addTalentSpell(prev_spell, active, true, true, disabled);
 			else                                            // at normal learning
-				learnSpell(prev_spell, true);
+				DETAIL_LOG("测试点位置1");
+				learnActiveSpell(prev_spell, true);
 		}
-
+		if (spell_id == 13033) {
+			DETAIL_LOG("测试点位置2");
+		}
 		PlayerSpell newspell;
 		newspell.state = state;
 		newspell.active = active;
@@ -3499,9 +3504,9 @@ bool Player::addTalentSpell(uint32 spell_id, bool active, bool learning, bool de
 		if (!itr2->second.autoLearned)
 		{
 			if (!IsInWorld() || !itr2->second.active)       // at spells loading, no output, but allow save
-				addSpell(itr2->second.spell, itr2->second.active, true, true, false);
+				addTalentSpell(itr2->second.spell, itr2->second.active, true, true, false);
 			else                                            // at normal learning
-				learnSpell(itr2->second.spell, true);
+				learnActiveSpell(itr2->second.spell, true);
 		}
 	}
 
@@ -4141,7 +4146,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& 
 	PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 	if (itr == m_spells.end())
 		return;
-	DETAIL_LOG("当前天赋技能数量运行中后11111111");
+	
 	if (itr->second.state == PLAYERSPELL_REMOVED || (disabled && itr->second.disabled))
 		return;
 
@@ -4210,7 +4215,7 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& 
 		
 	}
 	
-	DETAIL_LOG("当前天赋技能数量运行中后 %u", m_talents[m_activeSpec].size());
+
 	// update free primary prof.points (if not overflow setting, can be in case GM use before .learn prof. learning)
 	if (sSpellMgr.IsPrimaryProfessionFirstRankSpell(spell_id))
 	{
@@ -22066,7 +22071,7 @@ void Player::BuildPlayerTalentsInfoData(uint8 spec)
 		
 			DETAIL_LOG("学习技能 %u ", talentInfo->TalentID);
 			uint32 spellid = talentInfo->RankID[talent.currentRank];
-			uint32 learning = addTalentSpell(spellid, true, false, false, false);
+			uint32 learning = addTalentSpell(spellid, true, false, false, true);
 			//更新天赋表单
 			if (learning && IsInWorld())
 			{
@@ -22155,7 +22160,112 @@ PlayerTalent const* Player::GetKnownTalentById(int32 talentId) const
 	else
 		return NULL;
 }
+void Player::learnActiveSpell(uint32 spell_id, bool dependent) //激活天赋技能切换
+{
+	PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 
+	bool disabled = (itr != m_spells.end()) ? itr->second.disabled : false;
+	bool active = disabled ? itr->second.active : true;
+
+	bool learning = addTalentSpell(spell_id, active, true, dependent, false);
+
+	// prevent duplicated entires in spell book, also not send if not in world (loading)
+	if (learning && IsInWorld())
+	{
+		WorldPacket data(SMSG_LEARNED_SPELL, 4);
+		data << uint32(spell_id);
+		GetSession()->SendPacket(&data);
+	}
+
+	// learn all disabled higher ranks (recursive)
+	if (disabled)
+	{
+		SpellChainMapNext const& nextMap = sSpellMgr.GetSpellChainNext();
+		for (SpellChainMapNext::const_iterator i = nextMap.lower_bound(spell_id); i != nextMap.upper_bound(spell_id); ++i)
+		{
+			PlayerSpellMap::iterator iter = m_spells.find(i->second);
+			if (iter != m_spells.end() && iter->second.disabled)
+				learnActiveSpell(i->second, false);
+		}
+	}
+}
+void Player::ActivateSpec(uint8 specNum)
+{
+	if (GetActiveSpec() == specNum)
+		return;
+
+	if (specNum >= GetSpecsCount())
+		return;
+
+	UnsummonPetTemporaryIfAny();
+
+
+	// remove all talent spells that don't exist in next spec but exist in old
+	ResetTalentsInfoData(m_activeSpec);
+
+	SetActiveSpec(specNum);
+
+	PlayerTalentMap tempSpec = m_talents[specNum];
+	// now new spec data have only talents (maybe different rank) as in temp spec data, sync ranks then.
+	for (PlayerTalentMap::const_iterator tempIter = tempSpec.begin(); tempIter != tempSpec.end(); ++tempIter)
+	{
+		PlayerTalent const& talent = tempIter->second;
+
+		// removed state talent already unlearned in prev. loop
+		// but we need restore it if it deleted for finish removed-marked data in DB
+		if (talent.state == PLAYERSPELL_REMOVED)
+		{
+			m_talents[m_activeSpec][tempIter->first] = talent;
+			continue;
+		}
+
+		uint32 talentSpellId = talent.talentEntry->RankID[talent.currentRank];
+
+		// learn talent spells if they not in new spec (old spec copy)
+		// and if they have different rank
+		if (PlayerTalent const* cur_talent = GetKnownTalentById(tempIter->first))
+		{
+
+			if (talentSpellId == 13033) {
+					DETAIL_LOG("打印测试点1state %u", tempIter->second.state);
+			}
+			if (cur_talent->currentRank != talent.currentRank)
+				learnActiveSpell(talentSpellId, false);
+		}
+		else {
+			if (talentSpellId == 13033) {
+				DETAIL_LOG("打印测试点2state %u", tempIter->second.state);
+			}
+			learnActiveSpell(talentSpellId, false);
+
+		}
+			
+
+		// sync states - original state is changed in addSpell that learnSpell calls
+		PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
+		if (specIter != m_talents[m_activeSpec].end())
+			specIter->second.state = talent.state;
+		else
+		{
+			sLog.outError("ActivateSpec: Talent spell %u expected to learned at spec switch but not listed in talents at final check!", talentSpellId);
+
+			// attempt resync DB state (deleted lost spell from DB)
+			if (talent.state != PLAYERSPELL_NEW)
+			{
+				PlayerTalent& talentNew = m_talents[m_activeSpec][tempIter->first];
+				talentNew = talent;
+				talentNew.state = PLAYERSPELL_REMOVED;
+			}
+		}
+	}
+
+	InitTalentForLevel();
+
+
+
+	ResummonPetTemporaryUnSummonedIfAny();
+
+}
 /*SpellEntry const* Player::GetKnownTalentRankById(int32 talentId) const
 {
 	if (PlayerTalent const* talent = GetKnownTalentById(talentId))

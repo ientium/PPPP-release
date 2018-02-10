@@ -1551,6 +1551,12 @@ class MANGOS_DLL_SPEC Player final: public Unit
 //ientium@sina.com 小脏手修改
 		bool ResetTalentsInfoData(uint8 spec);    //删除切换前的天赋技能技能
 		void BuildPlayerTalentsInfoData(uint8 spec);  //添加切换后的天赋技能
+		void learnActiveSpell(uint32 spell_id, bool dependent); //激活天赋技能切换
+		void ActivateSpec(uint8 specNum);
+		uint8 GetActiveSpec() { return m_activeSpec; }
+		void SetActiveSpec(uint8 spec) { m_activeSpec = spec; }
+		uint8 GetSpecsCount() { return m_specsCount; }
+		void SetSpecsCount(uint8 count) { m_specsCount = count; }
 //*************************************************************************************************************************************
 		void removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& t_activeTalenet, bool learn_low_rank = true);//删除技能不清除天赋列表
 		bool addTalentSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);//添加技能不清除天赋列表
