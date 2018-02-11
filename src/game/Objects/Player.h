@@ -63,6 +63,7 @@ class ZoneScript;
 class PlayerAI;
 class NodeSession;
 class PlayerBroadcaster;
+struct ActionButton;
 
 #define PLAYER_MAX_SKILLS           127
 #define PLAYER_EXPLORED_ZONES_SIZE  64
@@ -74,7 +75,7 @@ enum SpellModType
     SPELLMOD_FLAT         = 107,                            // SPELL_AURA_ADD_FLAT_MODIFIER
     SPELLMOD_PCT          = 108                             // SPELL_AURA_ADD_PCT_MODIFIER
 };
-
+typedef std::map<uint8, ActionButton> ActionButtonList;
 // 2^n values, Player::m_isunderwater is a bitmask. These are mangos internal values, they are never send to any client
 enum PlayerUnderwaterState
 {
@@ -119,9 +120,22 @@ struct PlayerTalent
 	uint32 currentRank;
 	PlayerSpellState state;
 };
+typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;
+
+//********************************************************************************************************
+//双天赋按钮保存
+//ientium@sina.com 小脏手修改
+enum ActionButtonIndex
+{
+	ACTION_BUTTON_SHAMAN_TOTEMS_BAR = 132,
+};
+
+
+//***********************************************************************************************************
+
 //*************************************************************************************************************************************
 
-typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;
+
 
 typedef UNORDERED_MAP<uint32, PlayerSpell> PlayerSpellMap;
 
@@ -979,6 +993,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
 //双天赋修改
 //ientium@sina.com 小脏手
 		PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
+		ActionButtonList m_actionButtons[MAX_TALENT_SPEC_COUNT];
 		uint8 m_activeSpec;
 		uint8 m_specsCount;
 		//*****************************************************************************************************************************
@@ -1557,6 +1572,16 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		void SetActiveSpec(uint8 spec) { m_activeSpec = spec; }
 		uint8 GetSpecsCount() { return m_specsCount; }
 		void SetSpecsCount(uint8 count) { m_specsCount = count; }
+		ActionButton const* GetActionButton(uint8 button);
+
+		//static bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg = true);
+		ActionButton* addActionButton(uint8 spec, uint8 button, uint32 action, uint8 type);
+		void removeActionButton(uint8 spec, ActionButtonList& tBList, uint8 button);
+		void removeActionButton(uint8 spec, uint8 button);
+		void SendInitialActionButtons() const;
+		void SendLockActionButtons() const;
+
+
 //*************************************************************************************************************************************
 		void removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& t_activeTalenet, bool learn_low_rank = true);//删除技能不清除天赋列表
 		bool addTalentSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);//添加技能不清除天赋列表
@@ -2304,7 +2329,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
         bool   m_enableInstanceSwitch;
         uint32 m_skippedUpdateTime;
         uint32 m_DetectInvTimer;
-
+		
     public:
         void AddSkippedUpdateTime(uint32 t) { m_skippedUpdateTime += t; }
         uint32 GetSkippedUpdateTime() const { return m_skippedUpdateTime; }
@@ -2414,6 +2439,9 @@ class MANGOS_DLL_SPEC Player final: public Unit
         Item* m_items[PLAYER_SLOTS_COUNT];
         uint32 m_currentBuybackSlot;
 
+
+		
+
         std::vector<Item*> m_itemUpdateQueue;
         bool m_itemUpdateQueueBlocked;
 
@@ -2510,7 +2538,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
         bool m_justBoarded;
         void SetJustBoarded(bool hasBoarded) { m_justBoarded = hasBoarded; }
         bool HasJustBoarded() { return m_justBoarded; }
-
+		
     private:
         // internal common parts for CanStore/StoreItem functions
         InventoryResult _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;

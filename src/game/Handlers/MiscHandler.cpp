@@ -959,8 +959,9 @@ void WorldSession::HandleSetActionButtonOpcode(WorldPacket& recv_data)
     if (!packetData)
     {
         DETAIL_LOG("MISC: Remove action from button %u", button);
-        ForwardPacketToMaster();
-        GetMasterPlayer()->removeActionButton(button);
+        //ForwardPacketToMaster();
+        //GetMasterPlayer()->removeActionButton(button);
+		GetPlayer()->removeActionButton(GetPlayer()->GetActiveSpec(), button);
     }
     else
     {
@@ -977,8 +978,9 @@ void WorldSession::HandleSetActionButtonOpcode(WorldPacket& recv_data)
         }
         if (IsNode() && !Player::IsActionButtonDataValid(button, action, type, GetPlayer()))
             return;
-        ForwardPacketToMaster();
-        GetMasterPlayer()->addActionButton(button, action, type);
+		GetPlayer()->addActionButton(GetPlayer()->m_activeSpec, button, action, type);
+		//ForwardPacketToMaster();
+        //GetMasterPlayer()->addActionButton(button, action, type);
     }
 }
 
