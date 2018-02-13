@@ -194,9 +194,10 @@ bool ChatHandler::HandleDebugTF1Command(char* /*args*/)
 	// save GM account without delay and output message (testing, etc)
 	if (GetAccessLevel() >= SEC_PLAYER)
 	{
-		player->ResetTalentsInfoData(1);
-		player->m_activeSpec = 0;
-		player->BuildPlayerTalentsInfoData(0);
+		player->ActivateSpec(0);
+		//player->ResetTalentsInfoData(1);
+		//player->m_activeSpec = 0;
+		//player->BuildPlayerTalentsInfoData(0);
 		SendSysMessage("切换天赋1 ");
 		
 		sLog.outDetail("Player %s (guid %u) 切换为天赋1.", player->GetName(), player->GetGUIDLow());
@@ -213,10 +214,10 @@ bool ChatHandler::HandleDebugTF2Command(char* /*args*/)
 	{
 		
 		if(player->m_specsCount>1){
-			player->ResetTalentsInfoData(0);
-			
-			player->m_activeSpec = 1;
-			player->BuildPlayerTalentsInfoData(1);
+			//player->ResetTalentsInfoData(0);
+			player->ActivateSpec(1);
+			//player->m_activeSpec = 1;
+			//player->BuildPlayerTalentsInfoData(1);
 			SendSysMessage("切换天赋2 ");
 			
 			DETAIL_LOG("Player %s (guid %u) 切换为天赋2.", player->GetName(), player->GetGUIDLow());

@@ -22008,7 +22008,7 @@ void Player::_LoadTalents(QueryResult* result)
 				talent.talentEntry = talentInfo;
 				talent.state = PLAYERSPELL_UNCHANGED;
 				m_talents[spec][talentInfo->TalentID] = talent;
-				DETAIL_LOG("载入未使用的天赋信息 TalentID %u ", talentInfo->TalentID);
+				DETAIL_LOG("载入天赋信息 TalentID %u ", talentInfo->TalentID);
 			}
 		} while (result->NextRow());
 		
@@ -22156,10 +22156,164 @@ PlayerTalent const* Player::GetKnownTalentById(int32 talentId) const
 		return NULL;
 }
 
-/*SpellEntry const* Player::GetKnownTalentRankById(int32 talentId) const
+void Player::ActivateSpec(uint8 specNum)
 {
-	if (PlayerTalent const* talent = GetKnownTalentById(talentId))
-		return sSpellStore.LookupEntry(talent->talentEntry->RankID[talent->currentRank]);
-	else
-		return NULL;
+	if (GetActiveSpec() == specNum)
+		return;
+
+	if (specNum >= GetSpecsCount())
+		return;
+
+	UnsummonPetTemporaryIfAny();
+
+	// prevent deletion of action buttons by client at spell unlearn or by player while spec change in progress
+
+
+
+	// copy of new talent spec (we will use it as model for converting current tlanet state to new)
+	PlayerTalentMap tempSpec = m_talents[specNum];
+
+	// copy old spec talents to new one, must be before spec switch to have previous spec num(as m_activeSpec)
+	m_talents[specNum] = m_talents[m_activeSpec];
+
+	SetActiveSpec(specNum);
+
+	// remove all talent spells that don't exist in next spec but exist in old
+	for (PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].begin(); specIter != m_talents[m_activeSpec].end();)
+	{
+		PlayerTalent& talent = specIter->second;
+
+		if (talent.state == PLAYERSPELL_REMOVED)
+		{
+			++specIter;
+			continue;
+		}
+
+		PlayerTalentMap::iterator iterTempSpec = tempSpec.find(specIter->first);
+
+		// remove any talent rank if talent not listed in temp spec
+		if (iterTempSpec == tempSpec.end() || iterTempSpec->second.state == PLAYERSPELL_REMOVED)
+		{
+			TalentEntry const* talentInfo = talent.talentEntry;
+
+			for (int r = 0; r < MAX_TALENT_RANK; ++r)
+				if (talentInfo->RankID[r])
+					removeSpell(talentInfo->RankID[r], !IsPassiveSpell(talentInfo->RankID[r]), false);
+
+			specIter = m_talents[m_activeSpec].begin();
+		}
+		else
+			++specIter;
+	}
+
+	// now new spec data have only talents (maybe different rank) as in temp spec data, sync ranks then.
+	for (PlayerTalentMap::const_iterator tempIter = tempSpec.begin(); tempIter != tempSpec.end(); ++tempIter)
+	{
+		PlayerTalent const& talent = tempIter->second;
+
+		// removed state talent already unlearned in prev. loop
+		// but we need restore it if it deleted for finish removed-marked data in DB
+		if (talent.state == PLAYERSPELL_REMOVED)
+		{
+			m_talents[m_activeSpec][tempIter->first] = talent;
+			continue;
+		}
+
+		uint32 talentSpellId = talent.talentEntry->RankID[talent.currentRank];
+
+		// learn talent spells if they not in new spec (old spec copy)
+		// and if they have different rank
+		if (PlayerTalent const* cur_talent = GetKnownTalentById(tempIter->first))
+		{
+			if (cur_talent->currentRank != talent.currentRank)
+				learnSpell(talentSpellId, false);
+		}
+		else
+			learnSpell(talentSpellId, false);
+
+		// sync states - original state is changed in addSpell that learnSpell calls
+		PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
+		if (specIter != m_talents[m_activeSpec].end())
+			specIter->second.state = talent.state;
+		else
+		{
+			sLog.outError("ActivateSpec: Talent spell %u expected to learned at spec switch but not listed in talents at final check!", talentSpellId);
+
+			// attempt resync DB state (deleted lost spell from DB)
+			if (talent.state != PLAYERSPELL_NEW)
+			{
+				PlayerTalent& talentNew = m_talents[m_activeSpec][tempIter->first];
+				talentNew = talent;
+				talentNew.state = PLAYERSPELL_REMOVED;
+			}
+		}
+	}
+
+	InitTalentForLevel();
+
+	// recheck action buttons (not checked at loading/spec copy)
+/*	ActionButtonList const& currentActionButtonList = m_actionButtons[m_activeSpec];
+	for (ActionButtonList::const_iterator itr = currentActionButtonList.begin(); itr != currentActionButtonList.end();)
+	{
+		if (itr->second.uState != ACTIONBUTTON_DELETED)
+		{
+			// remove broken without any output (it can be not correct because talents not copied at spec creating)
+			if (!IsActionButtonDataValid(itr->first, itr->second.GetAction(), itr->second.GetType(), this, false))
+			{
+				removeActionButton(m_activeSpec, itr->first);
+				itr = currentActionButtonList.begin();
+				continue;
+			}
+		}
+		++itr;
+	}
+*/
+	ResummonPetTemporaryUnSummonedIfAny();
+
+	
+
+	//SendInitialActionButtons();
+
+}
+/*
+void Player::UpdateSpecCount(uint8 count)
+{
+	uint8 curCount = GetSpecsCount();
+	if (curCount == count)
+		return;
+
+	// maybe current spec data must be copied to 0 spec?
+	if (m_activeSpec >= count)
+		ActivateSpec(0);
+
+	// copy spec data from new specs
+	if (count > curCount)
+	{
+		// copy action buttons from active spec (more easy in this case iterate first by button)
+		ActionButtonList const& currentActionButtonList = m_actionButtons[m_activeSpec];
+
+		for (ActionButtonList::const_iterator itr = currentActionButtonList.begin(); itr != currentActionButtonList.end(); ++itr)
+		{
+			if (itr->second.uState != ACTIONBUTTON_DELETED)
+			{
+				for (uint8 spec = curCount; spec < count; ++spec)
+					//addActionButton(spec, itr->first, itr->second.GetAction(), itr->second.GetType());
+			}
+		}
+	}
+	// delete spec data for removed specs
+	else if (count < curCount)
+	{
+		// delete action buttons for removed spec
+		for (uint8 spec = count; spec < curCount; ++spec)
+		{
+			// delete action buttons for removed spec
+			for (uint8 button = 0; button < MAX_ACTION_BUTTONS; ++button)
+				//removeActionButton(spec, button);
+		}
+	}
+
+	SetSpecsCount(count);
+
+	//SendTalentsInfoData(false);
 }*/
