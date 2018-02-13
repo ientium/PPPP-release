@@ -213,12 +213,10 @@ bool ChatHandler::HandleDebugTF2Command(char* /*args*/)
 	{
 		
 		if(player->m_specsCount>1){
-
-			player->ActivateSpec(1);
-			/*player->ResetTalentsInfoData(0);
+			player->ResetTalentsInfoData(0);
 			
 			player->m_activeSpec = 1;
-			player->BuildPlayerTalentsInfoData(1);*/
+			player->BuildPlayerTalentsInfoData(1);
 			SendSysMessage("切换天赋2 ");
 			
 			DETAIL_LOG("Player %s (guid %u) 切换为天赋2.", player->GetName(), player->GetGUIDLow());
