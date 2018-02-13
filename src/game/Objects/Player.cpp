@@ -22203,11 +22203,11 @@ void Player::ActivateSpec(uint8 specNum)
 		return;
 
 	UnsummonPetTemporaryIfAny();
-	
+
 
 	// remove all talent spells that don't exist in next spec but exist in old
 	ResetTalentsInfoData(m_activeSpec);
-	
+
 	SetActiveSpec(specNum);
 	PlayerTalentMap tempSpec = m_talents[specNum];
 	for (PlayerTalentMap::const_iterator tempIter = tempSpec.begin(); tempIter != tempSpec.end(); ++tempIter)
@@ -22280,7 +22280,7 @@ void Player::ActivateSpec(uint8 specNum)
 	}
 
 	InitTalentForLevel();
-	ActionButtonList const& currentActionButtonList = m_actionButtons[m_activeSpec];
+	ActionButtonList  const&  currentActionButtonList = m_actionButtons[m_activeSpec];
 	for (ActionButtonList::const_iterator itr = currentActionButtonList.begin(); itr != currentActionButtonList.end();)
 	{
 		if (itr->second.uState != ACTIONBUTTON_DELETED)
@@ -22288,19 +22288,18 @@ void Player::ActivateSpec(uint8 specNum)
 			// remove broken without any output (it can be not correct because talents not copied at spec creating)
 			if (!IsActionButtonDataValid(itr->first, itr->second.GetAction(), itr->second.GetType(), this))
 			{
-				//addActionButton(m_activeSpec, itr->first, itr->second.GetAction(), itr->second.GetType());
-				removeActionButton(m_activeSpec,itr->first);
-				//removeActionButton(m_activeSpec,itr->first );
-				//itr = currentActionButtonList.begin();
+				
+				removeActionButton(m_activeSpec,itr->first );
+				itr = currentActionButtonList.begin();
 				continue;
 			}
 		}
 		++itr;
 	}
-	SendInitialActionButtons();
+
 
 	ResummonPetTemporaryUnSummonedIfAny();
-	
+	SendInitialActionButtons();
 }
 // ######################## ACTION BUTTONS ###########################
 void Player::SendInitialActionButtons() const
@@ -22337,6 +22336,20 @@ ActionButton* Player::addActionButton(uint8 spec, uint8 button, uint32 action, u
 
 	DETAIL_LOG("Player '%u' Added Action '%u' (type %u) to Button '%u' for spec %u", GetGUIDLow(), action, uint32(type), button, spec);
 	return &ab;
+}
+void Player::removeActionButton(uint8 spec, ActionButtonList& tBList, uint8 button)
+{
+
+	ActionButtonList::iterator buttonItr = tBList.find(button);
+	if (buttonItr == tBList.end() || buttonItr->second.uState == ACTIONBUTTON_DELETED)
+		return;
+
+	if (buttonItr->second.uState == ACTIONBUTTON_NEW)
+		tBList.erase(buttonItr);           // new and not saved
+	else
+		buttonItr->second.uState = ACTIONBUTTON_DELETED;    // saved, will deleted at next save
+
+	DETAIL_LOG("Action Button '%u' Removed from Player '%u' for spec %u", button, GetGUIDLow(), spec);
 }
 void Player::removeActionButton(uint8 spec,  uint8 button)
 {
@@ -22384,7 +22397,7 @@ void Player::_LoadActions(QueryResult *result)
 			}
 		} while (result->NextRow());
 
-	//	delete result;
+		delete result;
 	}
 }
 

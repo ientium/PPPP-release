@@ -1576,7 +1576,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
 
 		//static bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg = true);
 		ActionButton* addActionButton(uint8 spec, uint8 button, uint32 action, uint8 type);
-		//void removeActionButton(uint8 spec, ActionButtonList& tBList, uint8 button);
+		void removeActionButton(uint8 spec, ActionButtonList& tBList, uint8 button);
 		void removeActionButton(uint8 spec, uint8 button);
 		void SendInitialActionButtons() const;
 		void SendLockActionButtons() const;
