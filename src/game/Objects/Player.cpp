@@ -22275,6 +22275,183 @@ void Player::ActivateSpec(uint8 specNum)
 	//SendInitialActionButtons();
 
 }
+void Player::_LoadActions(QueryResult *result)
+{
+	for (int i = 0; i < MAX_TALENT_SPEC_COUNT; ++i)
+		m_actionButtons[i].clear();
+
+	// QueryResult *result = CharacterDatabase.PQuery("SELECT spec, button,action,type FROM character_action WHERE guid = '%u' ORDER BY button",GetGUIDLow());
+
+	if (result)
+	{
+		do
+		{
+			Field* fields = result->Fetch();
+
+			uint8 spec = fields[0].GetUInt8();
+			uint8 button = fields[1].GetUInt8();
+			uint32 action = fields[2].GetUInt32();
+			uint8 type = fields[3].GetUInt8();
+
+			if (ActionButton* ab = addActionButton(spec, button, action, type))
+			{
+				ab->uState = ACTIONBUTTON_UNCHANGED;
+			}
+			else
+			{
+				sLog.outError("  ...at loading, and will deleted in DB also");
+
+				// Will deleted in DB at next save (it can create data until save but marked as deleted)
+				m_actionButtons[spec][button].uState = ACTIONBUTTON_DELETED;
+			}
+		} while (result->NextRow());
+
+
+	}
+}
+void Player::SendInitialActionButtons() const
+{
+	WorldPacket data(SMSG_ACTION_BUTTONS, (MAX_ACTION_BUTTONS * 4));
+	for (int button = 0; button < MAX_ACTION_BUTTONS; ++button)
+	{
+		ActionButtonList::const_iterator itr = m_actionButtons.find(button);
+		if (itr != m_actionButtons.end() && itr->second.uState != ACTIONBUTTON_DELETED)
+			data << uint32(itr->second.packedData);
+		else
+			data << uint32(0);
+	}
+
+	GetSession()->SendPacket(&data);
+}
+
+ActionButton* Player::addActionButton(uint8 spec, uint8 button, uint32 action, uint8 type)
+{
+	if (spec == GetActiveSpec() && !IsActionButtonDataValid(button, action, type, this))
+		return NULL;
+
+	// it create new button (NEW state) if need or return existing
+	ActionButton& ab = m_actionButtons[spec][button];
+
+	// set data and update to CHANGED if not NEW
+	ab.SetActionAndType(action, ActionButtonType(type));
+
+	DETAIL_LOG("Player '%u' Added Action '%u' (type %u) to Button '%u' for spec %u", GetGUIDLow(), action, uint32(type), button, spec);
+	return &ab;
+}
+
+void Player::removeActionButton(uint8 button)
+{
+	ActionButtonList& currentActionButtonList = m_actionButtons[spec];
+	ActionButtonList::iterator buttonItr = currentActionButtonList.find(button);
+	if (buttonItr == currentActionButtonList.end() || buttonItr->second.uState == ACTIONBUTTON_DELETED)
+		return;
+
+	if (buttonItr->second.uState == ACTIONBUTTON_NEW)
+		currentActionButtonList.erase(buttonItr);           // new and not saved
+	else
+		buttonItr->second.uState = ACTIONBUTTON_DELETED;    // saved, will deleted at next save
+
+	DETAIL_LOG("Action Button '%u' Removed from Player '%u' for spec %u", button, GetGUIDLow(), spec);
+}
+ActionButton const* Player::GetActionButton(uint8 button)
+{
+	ActionButtonList& currentActionButtonList = m_actionButtons[m_activeSpec];
+	ActionButtonList::iterator buttonItr = currentActionButtonList.find(button);
+	if (buttonItr == currentActionButtonList.end() || buttonItr->second.uState == ACTIONBUTTON_DELETED)
+		return NULL;
+
+	return &buttonItr->second;
+}
+bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg)
+{
+	if (button >= MAX_ACTION_BUTTONS)
+	{
+		if (msg)
+		{
+			if (player)
+				sLog.outError("Action %u not added into button %u for player %s: button must be < %u", action, button, player->GetName(), MAX_ACTION_BUTTONS);
+			else
+				sLog.outError("Table `playercreateinfo_action` have action %u into button %u : button must be < %u", action, button, MAX_ACTION_BUTTONS);
+		}
+		return false;
+	}
+
+	if (action >= MAX_ACTION_BUTTON_ACTION_VALUE)
+	{
+		if (msg)
+		{
+			if (player)
+				sLog.outError("Action %u not added into button %u for player %s: action must be < %u", action, button, player->GetName(), MAX_ACTION_BUTTON_ACTION_VALUE);
+			else
+				sLog.outError("Table `playercreateinfo_action` have action %u into button %u : action must be < %u", action, button, MAX_ACTION_BUTTON_ACTION_VALUE);
+		}
+		return false;
+	}
+
+	switch (type)
+	{
+	case ACTION_BUTTON_SPELL:
+	{
+		SpellEntry const* spellProto = sSpellStore.LookupEntry(action);
+		if (!spellProto)
+		{
+			if (msg)
+			{
+				if (player)
+					sLog.outError("Spell action %u not added into button %u for player %s: spell not exist", action, button, player->GetName());
+				else
+					sLog.outError("Table `playercreateinfo_action` have spell action %u into button %u: spell not exist", action, button);
+			}
+			return false;
+		}
+
+		if (player)
+		{
+			if (!player->HasSpell(spellProto->Id))
+			{
+				if (msg)
+					sLog.outError("Spell action %u not added into button %u for player %s: player don't known this spell", action, button, player->GetName());
+				return false;
+			}
+			else if (IsPassiveSpell(spellProto))
+			{
+				if (msg)
+					sLog.outError("Spell action %u not added into button %u for player %s: spell is passive", action, button, player->GetName());
+				return false;
+			}
+			// current range for button of totem bar is from ACTION_BUTTON_SHAMAN_TOTEMS_BAR to (but not including) ACTION_BUTTON_SHAMAN_TOTEMS_BAR + 12
+			else if (button >= ACTION_BUTTON_SHAMAN_TOTEMS_BAR && button < (ACTION_BUTTON_SHAMAN_TOTEMS_BAR + 12)
+				&& !spellProto->HasAttribute(SPELL_ATTR_EX7_TOTEM_SPELL))
+			{
+				if (msg)
+					sLog.outError("Spell action %u not added into button %u for player %s: attempt to add non totem spell to totem bar", action, button, player->GetName());
+				return false;
+			}
+		}
+		break;
+	}
+	case ACTION_BUTTON_ITEM:
+	{
+		if (!ObjectMgr::GetItemPrototype(action))
+		{
+			if (msg)
+			{
+				if (player)
+					sLog.outError("Item action %u not added into button %u for player %s: item not exist", action, button, player->GetName());
+				else
+					sLog.outError("Table `playercreateinfo_action` have item action %u into button %u: item not exist", action, button);
+			}
+			return false;
+		}
+		break;
+	}
+	default:
+		break;                                          // other cases not checked at this moment
+	}
+
+	return true;
+}
+
 /*
 void Player::UpdateSpecCount(uint8 count)
 {

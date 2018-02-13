@@ -63,10 +63,12 @@ class ZoneScript;
 class PlayerAI;
 class NodeSession;
 class PlayerBroadcaster;
-
+struct ActionButton;
 #define PLAYER_MAX_SKILLS           127
 #define PLAYER_EXPLORED_ZONES_SIZE  64
 
+
+typedef std::map<uint8, ActionButton> ActionButtonList;
 // Note: SPELLMOD_* values is aura types in fact
 enum SpellModType
 {
@@ -186,26 +188,37 @@ enum ActionButtonType
 
 struct ActionButton
 {
-    ActionButton() : packedData(0), uState( ACTIONBUTTON_NEW ) {}
+	ActionButton() : packedData(0), uState(ACTIONBUTTON_NEW) {}
 
-    uint32 packedData;
-    ActionButtonUpdateState uState;
+	uint32 packedData;
+	ActionButtonUpdateState uState;
 
-    // helpers
-    ActionButtonType GetType() const { return ActionButtonType(ACTION_BUTTON_TYPE(packedData)); }
-    uint32 GetAction() const { return ACTION_BUTTON_ACTION(packedData); }
-    void SetActionAndType(uint32 action, ActionButtonType type)
-    {
-        uint32 newData = action | (uint32(type) << 24);
-        if (newData != packedData || uState == ACTIONBUTTON_DELETED)
-        {
-            packedData = newData;
-            if (uState != ACTIONBUTTON_NEW)
-                uState = ACTIONBUTTON_CHANGED;
-        }
-    }
+	// helpers
+	ActionButtonType GetType() const
+	{
+		return ActionButtonType(ACTION_BUTTON_TYPE(packedData));
+	}
+	uint32 GetAction() const
+	{
+		return ACTION_BUTTON_ACTION(packedData);
+	}
+	void SetActionAndType(uint32 action, ActionButtonType type)
+	{
+		uint32 newData = action | (uint32(type) << 24);
+		if (newData != packedData || uState == ACTIONBUTTON_DELETED)
+		{
+			packedData = newData;
+			if (uState != ACTIONBUTTON_NEW)
+			{
+				uState = ACTIONBUTTON_CHANGED;
+			}
+		}
+	}
 };
-
+enum ActionButtonIndex
+{
+	ACTION_BUTTON_SHAMAN_TOTEMS_BAR = 132,
+};
 #define  MAX_ACTION_BUTTONS 120   // TBC 132 checked in 2.3.0
 
 struct PlayerCreateInfoItem
@@ -981,6 +994,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
 		uint8 m_activeSpec;
 		uint8 m_specsCount;
+		ActionButtonList m_actionButtons[MAX_TALENT_SPEC_COUNT];
 		//*****************************************************************************************************************************
 		void SummonIfPossible(bool agree);
 
@@ -2375,6 +2389,14 @@ class MANGOS_DLL_SPEC Player final: public Unit
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
         void _LoadGuild(QueryResult* result);
 
+		/*********************************************************/
+		/***                   Action SYSTEM                     ***/
+		/*********************************************************/
+		ActionButton const* GetActionButton(uint8 button);
+		void SendInitialActionButtons() const;
+		ActionButton* addActionButton(uint8 spec, uint8 button, uint32 action, uint8 type);
+		void removeActionButton(uint8 button);
+		static bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg = true);
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
         /*********************************************************/
