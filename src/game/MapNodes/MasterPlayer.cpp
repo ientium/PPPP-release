@@ -396,9 +396,9 @@ void MasterPlayer::LoadActions(QueryResult *result)
         {
             Field *fields = result->Fetch();
 
-            uint8 button = fields[1].GetUInt8();
-            uint32 action = fields[2].GetUInt32();
-            uint8 type = fields[3].GetUInt8();
+            uint8 button = fields[0].GetUInt8();
+            uint32 action = fields[1].GetUInt32();
+            uint8 type = fields[2].GetUInt8();
 
             if (ActionButton* ab = addActionButton(button, action, type))
                 ab->uState = ACTIONBUTTON_UNCHANGED;
