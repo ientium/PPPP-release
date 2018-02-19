@@ -324,7 +324,7 @@ void PlayerMenu::SendTalking(uint32 textID)
 
 void PlayerMenu::SendTalking(char const * title, char const * text)
 {
-    WorldPacket data(SMSG_NPC_TEXT_UPDATE, 50);             // guess size
+    WorldPacket data(SMSG_NPC_TEXT_UPDATE, 200);             // guess size
     data << uint32(0);
     for (uint32 i = 0; i < 8; ++i)
     {
@@ -344,7 +344,29 @@ void PlayerMenu::SendTalking(char const * title, char const * text)
 
     DEBUG_LOG("WORLD: Sent SMSG_NPC_TEXT_UPDATE ");
 }
+//ientium@sina.com 小脏手修改
+void PlayerMenu::SendText(char const * title, char const * text)
+{
+	WorldPacket data(SMSG_NPC_TEXT_UPDATE, 240);             // guess size
+	data << uint32(0x7FFFFFFF);
+	for (uint32 i = 0; i < 8; ++i)
+	{
+		data << float(0);
+		data << title;
+		data << text;
+		data << uint32(0);
+		data << uint32(0);
+		data << uint32(0);
+		data << uint32(0);
+		data << uint32(0);
+		data << uint32(0);
+		data << uint32(0);
+	}
 
+	GetMenuSession()->SendPacket(&data);
+
+	DEBUG_LOG("WORLD: Sent SMSG_NPC_TEXT_UPDATE ");
+}
 /*********************************************************/
 /***                    QUEST SYSTEM                   ***/
 /*********************************************************/

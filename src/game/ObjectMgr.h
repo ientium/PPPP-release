@@ -78,6 +78,8 @@ struct AreaTrigger
     float  target_Orientation;
 };
 
+
+
 struct BattlegroundEntranceTrigger
 {
     Team   team;
@@ -169,6 +171,8 @@ struct QuestGreetingLocale
     uint16 Emote;
     uint32 EmoteDelay;
 };
+
+
 
 enum
 {
@@ -894,8 +898,12 @@ class ObjectMgr
 //ientium@sina.com 小脏手修改
 		void LoadGuildLevelInfo();
 		void LoadBossFirstKillInfo();//Boss首杀信息
+									 //ientium@sina.com  小脏手修改
+		void LoadBossFirstKillMemberList();    //击杀用户列表信息
 		typedef std::vector<uint32> CreatureKillTime;       // [level]
+		typedef std::vector<uint32> PlayerInstanceMap;       // [memberlist]
 		CreatureKillTime creatureKillTime;
+		PlayerInstanceMap memberKillList;
 //*************************************************************************************************************************************************************
         void LoadPlayerInfo();
         void LoadPetLevelInfo();

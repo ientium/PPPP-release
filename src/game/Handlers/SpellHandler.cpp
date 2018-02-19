@@ -67,6 +67,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
+
     // some item classes can be used only in equipped state
     if (proto->InventoryType != INVTYPE_NON_EQUIP && !pItem->IsEquipped())
     {
@@ -74,7 +75,17 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         pUser->SendEquipError(EQUIP_ERR_ITEM_NOT_FOUND, pItem, NULL);
         return;
     }
+	//***************************************************************************************************************************************************************************
+	//自定义物品触发
+	//ientium@sina.com 小脏手修改
 
+	/*if (pItem->GetEntry() >= 440000)
+	{
+		//sLog.outError("CastSpell: =================item  spell by caster: %u", pItem->GetEntry());
+		sScriptMgr.OnItemUse(_player, pItem);
+		return;
+	}*/
+	//********************************************************************************************************************************************************************************
     InventoryResult msg = pUser->CanUseItem(pItem);
     if (msg != EQUIP_ERR_OK)
     {
@@ -124,7 +135,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     SpellCastTargets targets;
 
     recvPacket >> targets.ReadForCaster(pUser);
-
+	
     targets.Update(pUser);
 
     if (!pItem->IsTargetValidForItemUse(targets.getUnitTarget()))
@@ -148,13 +159,12 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
             Spell::SendCastResult(_player, spellInfo, SPELL_FAILED_BAD_TARGETS);
         return;
     }
+	if (!sScriptMgr.OnItemUse(pUser, pItem, targets))
+	{
+			// no script or script not process request by self
+			pUser->CastItemUseSpell(pItem, targets);
+	}
 
-    //Note: If script stop casting it must send appropriate data to client to prevent stuck item in gray state.
-    if (!sScriptMgr.OnItemUse(pUser, pItem, targets))
-    {
-        // no script or script not process request by self
-        pUser->CastItemUseSpell(pItem, targets);
-    }
 }
 
 #define OPEN_CHEST 11437

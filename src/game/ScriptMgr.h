@@ -554,10 +554,10 @@ struct Script
 {
     Script() :
         Name(""), pGossipHello(nullptr), pGOGossipHello(nullptr), pQuestAcceptNPC(nullptr),
-        pGossipSelect(nullptr), pGOGossipSelect(nullptr),
+        pGossipSelect(nullptr), pGOGossipSelect(nullptr), pItGossipSelect(nullptr),
         pGossipSelectWithCode(nullptr), pGOGossipSelectWithCode(nullptr), pQuestComplete(nullptr),
         pNPCDialogStatus(nullptr), pGODialogStatus(nullptr), pQuestRewardedNPC(nullptr), pQuestRewardedGO(nullptr), pItemHello(nullptr), pGOHello(nullptr), pAreaTrigger(nullptr),
-        pProcessEventId(nullptr), pItemQuestAccept(nullptr), pGOQuestAccept(nullptr),
+        pProcessEventId(nullptr), pItemQuestAccept(nullptr), pGOQuestAccept(nullptr), pQItemUse(nullptr),
         pItemUse(nullptr), pEffectDummyCreature(nullptr), pEffectDummyGameObj(nullptr), pEffectDummyItem(nullptr),
         pEffectAuraDummy(nullptr), GOOpen(nullptr),
         GOGetAI(nullptr), GetAI(nullptr), GetInstanceData(nullptr)
@@ -568,11 +568,14 @@ struct Script
     //Methods to be scripted
     bool (*pGossipHello             )(Player*, Creature*);
     bool (*pGOGossipHello           )(Player*, GameObject*);
+
     bool (*pQuestAcceptNPC          )(Player*, Creature*, Quest const*);
     bool (*pGossipSelect            )(Player*, Creature*, uint32, uint32);
     bool (*pGOGossipSelect          )(Player*, GameObject*, uint32, uint32);
+	bool(*pItGossipSelect           )(Player*, Item*, uint32, uint32);
     bool (*pGossipSelectWithCode    )(Player*, Creature*, uint32, uint32, const char*);
     bool (*pGOGossipSelectWithCode  )(Player*, GameObject*, uint32, uint32, const char*);
+	bool(*pItGossipSelectWithCode   )(Player*, Item*, uint32, uint32, const char*);
 //    bool (*pQuestSelect             )(Player*, Creature*, const Quest*);
     bool (*pQuestComplete           )(Player*, Creature*, const Quest*);
     uint32 (*pNPCDialogStatus       )(Player*, Creature*);
@@ -587,6 +590,7 @@ struct Script
     bool (*pGOQuestAccept           )(Player*, GameObject*, const Quest*);
 //    bool (*pGOChooseReward          )(Player*, GameObject*, const Quest*, uint32);
     bool (*pItemUse                 )(Player*, Item*, SpellCastTargets const&);
+	bool (*pQItemUse                 )(Player*, Item*);
     bool (*pEffectDummyCreature     )(Unit*, uint32, SpellEffectIndex, Creature*);
     bool (*pEffectDummyGameObj      )(Unit*, uint32, SpellEffectIndex, GameObject*);
     bool (*pEffectDummyItem         )(Unit*, uint32, SpellEffectIndex, Item*);
@@ -685,16 +689,19 @@ class ScriptMgr
         bool OnGossipHello(Player* pPlayer, GameObject* pGameObject);
         bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 sender, uint32 action, const char* code);
         bool OnGossipSelect(Player* pPlayer, GameObject* pGameObject, uint32 sender, uint32 action, const char* code);
+		bool OnGossipSelect(Player* pPlayer, Item* pItem, uint32 sender, uint32 action, const char* code);
         bool OnQuestAccept(Player* pPlayer, Creature* pCreature, Quest const* pQuest);
         bool OnQuestAccept(Player* pPlayer, GameObject* pGameObject, Quest const* pQuest);
         bool OnQuestAccept(Player* pPlayer, Item* pItem, Quest const* pQuest);
         bool OnQuestRewarded(Player* pPlayer, Creature* pCreature, Quest const* pQuest);
+
         bool OnQuestRewarded(Player* pPlayer, GameObject* pGameObject, Quest const* pQuest);
         uint32 GetDialogStatus(Player* pPlayer, Creature* pCreature);
         uint32 GetDialogStatus(Player* pPlayer, GameObject* pGameObject);
         bool OnGameObjectUse(Player* pPlayer, GameObject* pGameObject);
         bool OnGameObjectOpen(Player* pPlayer, GameObject* pGameObject);
         bool OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets);
+		bool OnItemUse(Player* pPlayer, Item* pItem);
         bool OnAreaTrigger(Player* pPlayer, AreaTriggerEntry const* atEntry);
         bool OnProcessEvent(uint32 eventId, Object* pSource, Object* pTarget, bool isStart);
         bool OnEffectDummy(Unit* pCaster, uint32 spellId, SpellEffectIndex effIndex, Creature* pTarget);

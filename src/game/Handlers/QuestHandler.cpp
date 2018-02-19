@@ -39,14 +39,22 @@ void WorldSession::HandleQuestgiverStatusQueryOpcode(WorldPacket & recv_data)
     recv_data >> guid;
     uint8 dialogStatus = DIALOG_STATUS_NONE;
 
-    Object* questgiver = _player->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_OR_GAMEOBJECT);
+    Object* questgiver = _player->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_GAMEOBJECT_OR_ITEM);
+	if (questgiver->GetEntry() >= 440004)
+	{
+		
+		//sScriptMgr.OnItemUse(_player, _player->GetItemByGuid(pObject->GetEntry()));
+		return;
+	}
+	
+
     if (!questgiver)
     {
         DETAIL_LOG("Error in CMSG_QUESTGIVER_STATUS_QUERY, called for not found questgiver %s", guid.GetString().c_str());
         return;
     }
 
-    //DEBUG_LOG("WORLD: Received CMSG_QUESTGIVER_STATUS_QUERY for %s", guid.GetString().c_str());
+    DEBUG_LOG("WORLD: Received CMSG_QUESTGIVER_STATUS_QUERY for %s", guid.GetString().c_str());
 
     switch (questgiver->GetTypeId())
     {
@@ -213,6 +221,18 @@ void WorldSession::HandleQuestgiverQueryQuestOpcode(WorldPacket & recv_data)
 
     // Verify that the guid is valid and is a questgiver or involved in the requested quest
     Object* pObject = _player->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_GAMEOBJECT_OR_ITEM);
+//***************************************************************************************************************************************************************************
+//自定义物品触发
+//ientium@sina.com 小脏手修改
+
+	if (pObject->GetEntry() >= 440000)
+	{
+		Item* tempItem = _player->GetItemByGuid(guid);
+		
+		sScriptMgr.OnItemUse(_player, tempItem);
+		return;
+	}
+//********************************************************************************************************************************************************************************
     if (!pObject || (!pObject->HasQuest(quest) && !pObject->HasInvolvedQuest(quest)))
     {
         _player->PlayerTalkClass->CloseGossip();

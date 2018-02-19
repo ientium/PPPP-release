@@ -119,6 +119,21 @@ struct PlayerTalent
 	uint32 currentRank;
 	PlayerSpellState state;
 };
+//副本记录用户信息
+struct PlayerInstanceInfo
+{
+	PlayerInstanceInfo() :instanceid(0), m_guid(0), m_Name(""), m_class(0), m_race(0), m_level(0), m_guild(0) {}
+	uint32 instanceid;
+	uint32 m_guid;
+	std::string m_Name;
+	uint16 m_class;
+	uint16 m_race;
+	uint16 m_level;
+	uint32 m_guild;
+};
+//副本击杀队员信息
+
+typedef UNORDERED_MAP<uint32, PlayerInstanceInfo> PlayerInstanceMap;
 //*************************************************************************************************************************************
 
 typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;
@@ -970,6 +985,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		uint32 getVipInfoTimeToCoin();  //获取未转化VIP积分的时间
 		uint16 costVipCoin(uint16 uType, uint32 t_coin); //花费积分点函数
 		uint16 setUpdateVIPFlyingTime(uint32 timetamp, uint32 coin);
+		uint16 setUpdateDoubleTalentTime(uint32 timetamp, uint32 coin);//更新双天赋时间
 		uint16 GetInfoLevel();
 		bool LevelUp(uint16 newlevel, uint32 costcoin);//提升用户等级
 

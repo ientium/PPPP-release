@@ -379,7 +379,7 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
         _player->SendPreparedGossip(pCreature);
     }
 }
-
+//菜单选择函数
 void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket & recv_data)
 {
     DEBUG_LOG("WORLD: CMSG_GOSSIP_SELECT_OPTION");
@@ -400,7 +400,15 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket & recv_data)
 
     uint32 sender = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
     uint32 action = _player->PlayerTalkClass->GossipOptionAction(gossipListId);
-
+	if (guid.IsItem())
+	{
+		
+		
+		//Item *pItem = _player->GetItemByPos(pos);
+		
+		sScriptMgr.OnGossipSelect(_player, GetPlayer()->GetItemByGuid(guid), sender, action, code.empty() ? NULL : code.c_str());
+		return;
+	}
     if (guid.IsAnyTypeCreature())
     {
         Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
@@ -424,7 +432,7 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket & recv_data)
     else if (guid.IsGameObject())
     {
         GameObject *pGo = GetPlayer()->GetGameObjectIfCanInteractWith(guid);
-
+		
         if (!pGo)
         {
             DEBUG_LOG("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());

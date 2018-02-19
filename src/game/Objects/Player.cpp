@@ -2732,7 +2732,6 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 //ientium@sina.com 小脏手 
 //加入公会贡献度计算
 
-//********************************************************************************************************************************
 void Player::GiveGuildReputation(uint32 xp, Unit* victim)
 {
 	if (xp < 1)
@@ -15412,19 +15411,15 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
 	_LoadEXInfo(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEXINFO));
 
 //********************************************************************************************************************************	
-
-    
-
 	
-	// after spell load
-    InitTalentForLevel();
-    learnDefaultSpells();
 	//***********************************************************************************************************************************
 	// 双天赋修改
 	//	ientium@sina.com 小脏手修改
 	_LoadTalents(holder->GetResult(PLAYER_LOGIN_QUERY_LOADTALENTS)); //载入其他天赋信息。当前天赋信息在LoadSpell里载入
  //************************************************************************************************************************************
-
+// after spell load
+    InitTalentForLevel();
+    learnDefaultSpells();
     // after spell load, learn rewarded spell if need also
     _LoadQuestStatus(holder->GetResult(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS));
 
@@ -15805,7 +15800,14 @@ void Player::_LoadEXInfo(QueryResult* result)
 		memberEXInfo.totaltime = fields[3].GetUInt32();
 		memberEXInfo.guild_reputation = fields[4].GetUInt32(); //公会声望
 		memberEXInfo.guildtime = fields[5].GetUInt32(); //加入公会日期
-		memberEXInfo.talenttime= fields[6].GetUInt32(); //天赋到期日期
+		//天赋到期日期
+		if ((time_t)fields[6].GetUInt32() > time(NULL)) {
+			memberEXInfo.talenttime = fields[6].GetUInt32();
+		}
+		else {
+			memberEXInfo.talenttime = 0;
+		}
+		
 
 		m_activeSpec = fields[7].GetUInt32(); //激活天赋
 		m_specsCount = fields[8].GetUInt32(); //天赋数量
@@ -21751,8 +21753,13 @@ uint32 Player::getVipInfo(int uType)
 
 	case -1: // 充值VIP积分和时间VIP积分的和
 
-		DEBUG_LOG("WORLD: 设定VIP时长 111");
+
 		return  memberEXInfo.vipcoin + memberEXInfo.generalcoin;
+		break;
+	case 4: // 获取双天赋时间
+
+
+		return  memberEXInfo.talenttime;
 		break;
 	}
 
@@ -21815,6 +21822,32 @@ uint16 Player::setUpdateVIPFlyingTime(uint32 timetamp, uint32 coin)
 
 
 }
+//更新VIP瞬飞时间，默认2592000秒 =30天
+uint16 Player::setUpdateDoubleTalentTime(uint32 timetamp, uint32 coin)
+{
+
+
+	if (timetamp == 0)
+	{
+
+		return true;
+	}
+	uint16 t_Flag = costVipCoin(2, coin);
+
+
+
+	if (t_Flag == 1) {
+		if (memberEXInfo.talenttime > 0) {
+			memberEXInfo.talenttime = memberEXInfo.talenttime + timetamp;
+		}
+		else {
+			memberEXInfo.talenttime = time(NULL) + timetamp;
+		}
+
+	}
+	return t_Flag;
+}
+
 //返回未转换的在线时间
 uint32 Player::getVipInfoTimeToCoin() {
 
@@ -21940,6 +21973,15 @@ bool Player::UpdateEXInfo() {
 void Player::_LoadTalents(QueryResult* result)
 {
 	// QueryResult *result = CharacterDatabase.PQuery("SELECT talent_id, current_rank, spec FROM character_talent WHERE guid = '%u'",GetGUIDLow());
+	//判断天赋有效时间
+	if (memberEXInfo.talenttime<time(NULL))
+	{
+		m_activeSpec = 0;
+		m_specsCount = 1;
+		memberEXInfo.talenttime = 0;
+		CharacterDatabase.PExecute("DELETE FROM character_talent WHERE guid = '%u' AND spec>0", GetGUIDLow());
+		
+	}
 	if (result)
 	{
 		do
@@ -21972,6 +22014,8 @@ void Player::_LoadTalents(QueryResult* result)
 				CharacterDatabase.PExecute("DELETE FROM character_talent WHERE talent_id = '%u'", talent_id);
 				continue;
 			}
+
+
 
 			uint32 currentRank = fields[1].GetUInt32();
 
@@ -22008,7 +22052,7 @@ void Player::_LoadTalents(QueryResult* result)
 				talent.talentEntry = talentInfo;
 				talent.state = PLAYERSPELL_UNCHANGED;
 				m_talents[spec][talentInfo->TalentID] = talent;
-				DETAIL_LOG("载入天赋信息 TalentID %u ", talentInfo->TalentID);
+				
 			}
 		} while (result->NextRow());
 		

@@ -1096,7 +1096,31 @@ bool ScriptMgr::OnGossipSelect(Player* pPlayer, GameObject* pGameObject, uint32 
 
     return false;
 }
+bool ScriptMgr::OnGossipSelect(Player* pPlayer, Item* pItem, uint32 sender, uint32 action, const char* code)
+{
+	sLog.outDebug("Gossip selection%s, sender: %d, action: %d", code ? " with code" : "", sender, action);
 
+	Script* pTempScript = m_scripts[pItem->GetProto()->ScriptId];
+
+	if (code)
+	{
+		if (pTempScript && pTempScript->pItGossipSelectWithCode)
+		{
+			pPlayer->PlayerTalkClass->ClearMenus();
+			return pTempScript->pItGossipSelectWithCode(pPlayer, pItem, sender, action, code);
+		}
+	}
+	else
+	{
+		if (pTempScript && pTempScript->pItGossipSelect)
+		{
+			pPlayer->PlayerTalkClass->ClearMenus();
+			return pTempScript->pItGossipSelect(pPlayer, pItem, sender, action);
+		}
+	}
+
+	return false;
+}
 bool ScriptMgr::OnQuestAccept(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
 {
     Script* pTempScript = m_scripts[pCreature->GetScriptId()];
@@ -1132,6 +1156,7 @@ bool ScriptMgr::OnQuestAccept(Player* pPlayer, Item* pItem, Quest const* pQuest)
 
     return pTempScript->pItemHello(pPlayer, pItem, pQuest);
 }
+
 
 bool ScriptMgr::OnQuestRewarded(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
 {
@@ -1207,10 +1232,20 @@ bool ScriptMgr::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& 
 {
     Script* pTempScript = m_scripts[pItem->GetProto()->ScriptId];
 
+	
     if (!pTempScript || !pTempScript->pItemUse)
         return false;
-
+	
     return pTempScript->pItemUse(pPlayer, pItem, targets);
+}bool ScriptMgr::OnItemUse(Player* pPlayer, Item* pItem)
+{
+	Script* pTempScript = m_scripts[pItem->GetProto()->ScriptId];
+	
+
+	if (!pTempScript || !pTempScript->pQItemUse)
+		return false;
+	
+	return pTempScript->pQItemUse(pPlayer, pItem);
 }
 
 bool ScriptMgr::OnAreaTrigger(Player* pPlayer, AreaTriggerEntry const* atEntry)

@@ -2720,61 +2720,6 @@ void ObjectMgr::LoadBossFirstKillInfo() {
 	QueryResult *result = CharacterDatabase.Query("SELECT entryid,creatureid,createtime FROM world_firest_instance");
 
 	uint32 count = 0;
-	//MC
-/*
-	creatureKillTime[12118] = 0;  ////MC鲁西弗隆
-	creatureKillTime[11982] = 0;  ////MC鲁西弗隆
-	creatureKillTime[12259] = 0;  ////MC鲁西弗隆
-	creatureKillTime[12057] = 0;  ////MC鲁西弗隆
-	creatureKillTime[12264] = 0;  ////MC鲁西弗隆
-	creatureKillTime[12056] = 0;  ////MC鲁西弗隆
-	creatureKillTime[11988] = 0;  ////MC鲁西弗隆
-	creatureKillTime[12098] = 0;
-	creatureKillTime[12018] = 0;
-	creatureKillTime[11502] = 0;
-    //BWL
-	creatureKillTime[12435] = 0;
-	creatureKillTime[13020] = 0;
-	creatureKillTime[12017] = 0;
-	creatureKillTime[11983] = 0;
-	creatureKillTime[14601] = 0;
-	creatureKillTime[11981] = 0;
-	creatureKillTime[14020] = 0;
-	creatureKillTime[11583] = 0;
-	//TAQ
-	creatureKillTime[15263] = 0;
-	creatureKillTime[15276] = 0;
-	creatureKillTime[15299] = 0;
-	creatureKillTime[15509] = 0;
-	creatureKillTime[15510] = 0;
-	creatureKillTime[15511] = 0;
-	creatureKillTime[15516] = 0;
-	creatureKillTime[15517] = 0;
-	creatureKillTime[15543] = 0;
-	creatureKillTime[15544] = 0;
-	creatureKillTime[15727] = 0;
-//NAXX
-	creatureKillTime[15928] = 0;
-	creatureKillTime[15929] = 0;
-	creatureKillTime[15930] = 0;
-	creatureKillTime[15931] = 0;
-	creatureKillTime[15932] = 0;
-	creatureKillTime[15936] = 0;
-	creatureKillTime[15952] = 0;
-	creatureKillTime[15953] = 0;
-	creatureKillTime[15954] = 0;
-	creatureKillTime[15956] = 0;
-	creatureKillTime[15989] = 0;
-	creatureKillTime[16011] = 0;
-	creatureKillTime[16028] = 0;
-	creatureKillTime[16060] = 0;
-	creatureKillTime[16061] = 0;
-	creatureKillTime[16062] = 0;
-	creatureKillTime[16063] = 0;
-	creatureKillTime[16064] = 0;
-	creatureKillTime[16065] = 0;
-	creatureKillTime[15990] = 0;
-	*/
 	if (!result)
 	{
 		BarGoLink bar(1);
@@ -2788,6 +2733,7 @@ void ObjectMgr::LoadBossFirstKillInfo() {
 
 	BarGoLink bar(result->GetRowCount());
 	creatureKillTime.resize(result->GetRowCount()+1);
+	memberKillList.resize(result->GetRowCount() + 1);
 	do
 	{
 		Field* fields = result->Fetch();
@@ -2797,6 +2743,47 @@ void ObjectMgr::LoadBossFirstKillInfo() {
 
 		//PlayerXPperLevel
 		creatureKillTime[creature_id] = create_time;
+		
+		bar.step();
+		++count;
+	} while (result->NextRow());
+
+	delete result;
+
+	sLog.outString();
+	sLog.outString(">> Loaded %u world_firest_instance", count);
+
+}
+
+
+//**********************************************************************************************************************************************************
+//**********************************************************************************************************************************************************
+//Boss击杀团队信息
+//ientium@sina.com  小脏手修改
+void ObjectMgr::LoadBossFirstKillMemberList() {
+	QueryResult *result = CharacterDatabase.Query("SELECT entry,membername,memberguid,memberclass,memberrace,memberlevel,memberguild FROM world_firest_instance_members");
+
+	uint32 count = 0;
+	if (!result)
+	{
+		BarGoLink bar(1);
+
+		sLog.outString();
+		sLog.outString(">> Loaded %u record for  world_firest_record", count);
+		sLog.outErrorDb("Error loading `world_firest_instance` table or empty table.");
+		Log::WaitBeforeContinueIfNeed();
+		exit(1);
+	}
+
+	BarGoLink bar(result->GetRowCount());
+	creatureKillTime.resize(result->GetRowCount() + 1);
+	do
+	{
+		Field* fields = result->Fetch();
+
+		uint32 creature_id = fields[0].GetUInt32();
+		//PlayerXPperLevel
+		//memberKillList[creature_id] = create_time;
 		bar.step();
 		++count;
 	} while (result->NextRow());

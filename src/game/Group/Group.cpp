@@ -2202,6 +2202,11 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 //******************************************************************************************************************************************************************************
 //如果是团队本并且为公会团
 //ientium@sina.com 小脏手修改
+			//如果是首杀,加入用户首杀记录
+			if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
+				
+			}
+
 			if (is_raid&&xpex>0){
 				if(gid>0){
 					RewardGuildGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, xpex);  //公会贡献度

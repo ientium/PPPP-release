@@ -276,7 +276,7 @@ class MANGOS_DLL_SPEC PlayerMenu
         void SendPointOfInterest( uint32 poi_id );
         void SendTalking( uint32 textID );
         void SendTalking( char const * title, char const * text );
-
+		void SendText(char const * title, char const * text);
         /*********************************************************/
         /***                    QUEST SYSTEM                   ***/
         /*********************************************************/
