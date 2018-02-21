@@ -5,6 +5,22 @@
 #define C_DOUBLE_TALENT_COIN          300           //需要300积分开双天赋一个月
 #define C_TALENTMONSECOND         2592000           //双天赋30天的秒数
 
+bool FullLevelItem_OnUse(Player* player, Item* item, SpellCastTargets const& target)
+{
+	if (player->InBattleGround() || player->IsFlying() || player->isInCombat()) {
+		ChatHandler(player).SendSysMessage("您当前不能使用这个卷轴哦!");
+		
+		return false;
+	}
+	if (player->getLevel() == DEFAULT_MAX_LEVEL) {
+		ChatHandler(player).SendSysMessage("您已经最高级了，做人不要太贪心哦!");
+		return false;
+	}
+	player->SetLevel(DEFAULT_MAX_LEVEL);
+	return true;
+}
+
+
 
 bool Item_OnUse(Player* player, Item* item, SpellCastTargets const& target)
 {
@@ -136,7 +152,10 @@ void AddSC_item_scripts()
     newscript->pItemUse = &Item_OnUse;
 	newscript->pItGossipSelect = &OnGossipSelect;
 	newscript->RegisterSelf();
-
+	newscript = new Script;
+	newscript->Name = "FullLevel_Book";
+	newscript->pItemUse = &FullLevelItem_OnUse;
+	newscript->RegisterSelf();
 	
 
 }
