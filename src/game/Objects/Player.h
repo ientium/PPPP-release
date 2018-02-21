@@ -119,21 +119,7 @@ struct PlayerTalent
 	uint32 currentRank;
 	PlayerSpellState state;
 };
-//副本记录用户信息
-struct PlayerInstanceInfo
-{
-	PlayerInstanceInfo() :instanceid(0), m_guid(0), m_Name(""), m_class(0), m_race(0), m_level(0), m_guild(0) {}
-	uint32 instanceid;
-	uint32 m_guid;
-	std::string m_Name;
-	uint16 m_class;
-	uint16 m_race;
-	uint16 m_level;
-	uint32 m_guild;
-};
-//副本击杀队员信息
 
-typedef UNORDERED_MAP<uint32, PlayerInstanceInfo> PlayerInstanceMap;
 //*************************************************************************************************************************************
 
 typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;

@@ -1414,6 +1414,9 @@ void World::SetInitialWorldSettings()
 	sObjectMgr.LoadGuildLevelInfo();
 	sLog.outString("Loading Boss FirstKillTime Info...");
 	sObjectMgr.LoadBossFirstKillInfo();
+	sLog.outString("Loading Boss FirstKillMemberList Info...");
+	sObjectMgr.LoadBossFirstKillMemberList();
+
 //***************************************************************************************************************************************************************
 
     if (!isMapServer)

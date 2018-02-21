@@ -2732,18 +2732,20 @@ void ObjectMgr::LoadBossFirstKillInfo() {
 	}
 
 	BarGoLink bar(result->GetRowCount());
-	creatureKillTime.resize(result->GetRowCount()+1);
-	memberKillList.resize(result->GetRowCount() + 1);
+	
+	
 	do
 	{
 		Field* fields = result->Fetch();
 
-		uint32 creature_id = fields[0].GetUInt32();
+		uint32 entry = fields[0].GetUInt32();
 		uint32 create_time = fields[2].GetUInt32();
 
-		//PlayerXPperLevel
-		creatureKillTime[creature_id] = create_time;
-		
+
+		InstanceInfo info;
+		info.createtime = create_time;
+		instanceInfos[entry] = info;
+
 		bar.step();
 		++count;
 	} while (result->NextRow());
@@ -2758,7 +2760,7 @@ void ObjectMgr::LoadBossFirstKillInfo() {
 
 //**********************************************************************************************************************************************************
 //**********************************************************************************************************************************************************
-//Boss击杀团队信息
+//Boss击杀团队成员信息
 //ientium@sina.com  小脏手修改
 void ObjectMgr::LoadBossFirstKillMemberList() {
 	QueryResult *result = CharacterDatabase.Query("SELECT entry,membername,memberguid,memberclass,memberrace,memberlevel,memberguild FROM world_firest_instance_members");
@@ -2768,30 +2770,39 @@ void ObjectMgr::LoadBossFirstKillMemberList() {
 	{
 		BarGoLink bar(1);
 
-		sLog.outString();
-		sLog.outString(">> Loaded %u record for  world_firest_record", count);
-		sLog.outErrorDb("Error loading `world_firest_instance` table or empty table.");
-		Log::WaitBeforeContinueIfNeed();
-		exit(1);
-	}
+		bar.step();
 
+		sLog.outString();
+		sLog.outString(">> Loaded %u world_firest_instance_members", count);
+		return;
+
+	}
 	BarGoLink bar(result->GetRowCount());
-	creatureKillTime.resize(result->GetRowCount() + 1);
+
 	do
 	{
+		bar.step();
 		Field* fields = result->Fetch();
 
-		uint32 creature_id = fields[0].GetUInt32();
-		//PlayerXPperLevel
-		//memberKillList[creature_id] = create_time;
-		bar.step();
+		uint32 entry = fields[0].GetUInt32();   //记录ID
+		PlayerInstanceInfo* pInfo;
+		pInfo->m_Name = fields[1].GetString();
+		pInfo->m_guid = fields[2].GetUInt32();
+		pInfo->m_class = fields[3].GetUInt32();
+		pInfo->m_race = fields[4].GetUInt32();
+		pInfo->m_level= fields[5].GetUInt32();
+		pInfo->m_guild = fields[6].GetUInt32();
+		uint32 icount = instanceInfos[entry].membersinfo.size()-1;
+		instanceInfos[entry].membersinfo.insert(std::pair<uint32, PlayerInstanceInfo*>(icount,pInfo));
+
+		
 		++count;
 	} while (result->NextRow());
 
 	delete result;
 
 	sLog.outString();
-	sLog.outString(">> Loaded %u world_firest_instance", count);
+	sLog.outString(">> Loaded %u world_firest_instance_members", count);
 
 }
 
@@ -6284,7 +6295,7 @@ uint32 ObjectMgr::GetXPForLevel(uint32 level) const
         return mPlayerXPperLevel[level];
     return 0;
 }
-uint16 ObjectMgr::GetBossKillTimeID(uint32 bossid) const
+uint16 ObjectMgr::GetBossEntryId(uint32 bossid) const
 {
 	uint16 bossEntryId = 0;
 	switch (bossid)
@@ -6348,17 +6359,18 @@ uint16 ObjectMgr::GetBossKillTimeID(uint32 bossid) const
 }
 uint32 ObjectMgr::GetBossFirstKillTime(uint32 bossid) const
 {
-	uint16 bossEntryId = GetBossKillTimeID(bossid);
+	uint16 bossEntryId = GetBossEntryId(bossid);
 	if (bossEntryId !=0){
-		return creatureKillTime[bossEntryId];
+		return sObjectMgr.instanceInfos[bossEntryId].createtime;
 	}
 	else
 		return 0;
 }
 void ObjectMgr::SetBossFirstKillTime(uint32 bossid,uint32 firstTime) 
 {
-	uint16 bossEntryId = GetBossKillTimeID(bossid);
-	creatureKillTime[bossEntryId] = firstTime;
+	uint16 bossEntryId = GetBossEntryId(bossid);
+	sObjectMgr.instanceInfos[bossEntryId].createtime = firstTime;
+	
 
 }
 void ObjectMgr::LoadPetNames()

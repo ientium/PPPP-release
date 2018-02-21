@@ -48,6 +48,7 @@ extern SQLStorage sCreatureDataLinkGroupStorage;
 class Group;
 class Item;
 
+
 struct GameTele
 {
     float  position_x;
@@ -269,6 +270,34 @@ struct GuildLevelInfo
 	uint16 basestep;
 	uint16 leveltype;
 };
+//副本记录用户信息
+struct PlayerInstanceInfo
+{
+	PlayerInstanceInfo() : m_guid(0), m_Name(""), m_class(0), m_race(0), m_level(0), m_guild(0) {}
+
+	uint32 m_guid;
+	std::string m_Name;
+	uint16 m_class;
+	uint16 m_race;
+	uint16 m_level;
+	uint32 m_guild;
+};
+//副本击杀队员信息
+#define INSTANCE_NUM          49          //记录副本数量
+#define MAX_GROUP_NUM         40          //团队最大人数
+typedef UNORDERED_MAP<uint32, PlayerInstanceInfo*> PlayerInstanceMap;
+
+struct InstanceInfo
+{
+	InstanceInfo() :instanceid(0), creatureid(0), createtime(0){}
+	uint32 instanceid;
+	uint32 creatureid;
+	uint16 createtime;
+	PlayerInstanceMap membersinfo;
+};
+
+typedef UNORDERED_MAP<uint32, InstanceInfo> InstanceInfoMap;
+
 
 //***********************************************************************************************************************************************
 
@@ -900,10 +929,9 @@ class ObjectMgr
 		void LoadBossFirstKillInfo();//Boss首杀信息
 									 //ientium@sina.com  小脏手修改
 		void LoadBossFirstKillMemberList();    //击杀用户列表信息
-		typedef std::vector<uint32> CreatureKillTime;       // [level]
-		typedef std::vector<uint32> PlayerInstanceMap;       // [memberlist]
-		CreatureKillTime creatureKillTime;
-		PlayerInstanceMap memberKillList;
+
+		
+		InstanceInfoMap instanceInfos;
 //*************************************************************************************************************************************************************
         void LoadPlayerInfo();
         void LoadPetLevelInfo();
@@ -941,7 +969,9 @@ class ObjectMgr
 //ientium@sina.com 小脏手修改
 		uint32 GetBossFirstKillTime(uint32 bossid) const;
 		void SetBossFirstKillTime(uint32 bossid, uint32 firstTime);
-		uint16 GetBossKillTimeID(uint32 bossid) const;   //获得对应的Index
+		uint16 GetBossEntryId(uint32 bossid) const;   //获得对应的Index
+
+
 //***************************************************************************************************************************************
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {

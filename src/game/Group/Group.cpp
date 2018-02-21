@@ -2165,6 +2165,7 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 //***********************************************************************************************************************************************************************		
 		Creature* creature = pVictim->ToCreature();
 		uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
+		
 		uint32 gid = 0;
 		std::string guildname = "";
 		//判断是否是团对本，是否是4大本Boss
@@ -2187,7 +2188,9 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 			}
 		}
 //****************************************************************************************************************************************************************************
-        for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+		uint16 bossEntryId = sObjectMgr.GetBossEntryId(creature->GetEntry());
+		uint16 iIndex = 0;
+		for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player* pGroupGuy = itr->getSource();
             if (!pGroupGuy || !pGroupGuy->IsInWorld())
@@ -2205,6 +2208,7 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 			//如果是首杀,加入用户首杀记录
 			if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
 				
+				UpdateFirstBossKillMemberRecord(pGroupGuy, bossEntryId, iIndex);   //更新用户信息表
 			}
 
 			if (is_raid&&xpex>0){
@@ -2214,7 +2218,8 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 			}
 //******************************************************************************************************************************************************************************
             RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
-        }
+			++iIndex;
+		}
 
         if (player_tap)
         {
@@ -2384,7 +2389,7 @@ void Group::UpdateLooterGuid(WorldObject* pLootedObject, bool ifneed)
 //ientium@sina.com 小脏手修改
 uint32 Group::getGroupGuildid()
 {
-	QueryResult *result = CharacterDatabase.PQuery("SELECT distinct(memberGuildId) WHERE groupId = '%u'", m_Id);
+	QueryResult *result = CharacterDatabase.PQuery("SELECT distinct(memberGuildId) FROM group_member  WHERE groupId = '%u'", m_Id);
 	if (!result)
 	{
 		sLog.outString();
@@ -2565,13 +2570,31 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 }
 //更新Boss首杀记录及贡献值
 void Group::UpdateFirstBossKillRecord(uint32 bossid,uint32 guildid, std::string guildstr) {
-	uint16 bossEntryId = sObjectMgr.GetBossKillTimeID(bossid);
-	sObjectMgr.creatureKillTime[bossEntryId] = time(NULL);//更新击杀时间为当前时间
+	uint16 bossEntryId = sObjectMgr.GetBossEntryId(bossid);
+
+	sObjectMgr.instanceInfos[bossEntryId].createtime = time(NULL);
 	if(guildid!=0){
 		CharacterDatabase.PExecute("UPDATE world_firest_instance SET guildid='%u',guildname='%s',leaderguid='%u',leadername='%s',groupnum='%u',createtime='%u' WHERE creatureid='%u'", guildid, guildstr.c_str(), m_leaderGuid,m_leaderName.c_str(), GetMembersCount(), bossid);
 	}else {
 	
 	}
+
+}
+//更新Boss首杀成员信息
+//bossEntryId为MapInstanceInfoMap副本序列号
+void Group::UpdateFirstBossKillMemberRecord(Player * player, uint32 bossEntryId,uint16 index) {
+
+	PlayerInstanceInfo* pInfo;
+
+
+	pInfo->m_Name = player->GetName();
+	pInfo->m_guid = player->GetGUIDLow();
+	pInfo->m_class = player->getClass();
+	pInfo->m_race = player->getRace();
+	pInfo->m_level = player->getLevel();
+	pInfo->m_guild = player->GetGuildId();
+
+	sObjectMgr.instanceInfos[bossEntryId].membersinfo.insert(std::pair<uint32, PlayerInstanceInfo*>(index, pInfo));
 
 }
 
