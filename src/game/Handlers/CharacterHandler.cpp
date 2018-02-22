@@ -750,7 +750,17 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     //if (GetWarden())
         //for (int i = 0; i < MAX_MOVE_TYPE; ++i)
             //GetWarden()->SendSpeedChange(UnitMoveType(i), pCurrChar->GetSpeed(UnitMoveType(i)));
-
+	//多天赋用户
+	if(pCurrChar->m_specsCount>1){
+		char sMessage[150];
+		sprintf(sMessage, "当前天赋为:天赋%d", pCurrChar->m_activeSpec);
+		ChatHandler(pCurrChar).PSendSysMessage(sMessage);
+		char tmp[64];
+		time_t currenttime = pCurrChar->memberEXInfo.talenttime;
+		strftime(tmp, sizeof(tmp), " %Y-%m-%d %H", localtime(&currenttime));
+		sprintf(sMessage, "天赋到期时间为:%s", tmp);
+		ChatHandler(pCurrChar).PSendSysMessage(sMessage);
+    }
     ALL_SESSION_SCRIPTS(this, OnLogin(pCurrChar));
 }
 

@@ -79,12 +79,12 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 	//自定义物品触发
 	//ientium@sina.com 小脏手修改
 
-	/*if (pItem->GetEntry() >= 440000)
+	if (pItem->GetEntry() >= 440000)
 	{
 		//sLog.outError("CastSpell: =================item  spell by caster: %u", pItem->GetEntry());
 		sScriptMgr.OnItemUse(_player, pItem);
 		return;
-	}*/
+	}
 	//********************************************************************************************************************************************************************************
     InventoryResult msg = pUser->CanUseItem(pItem);
     if (msg != EQUIP_ERR_OK)

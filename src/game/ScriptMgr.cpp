@@ -1237,7 +1237,9 @@ bool ScriptMgr::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& 
         return false;
 	
     return pTempScript->pItemUse(pPlayer, pItem, targets);
-}bool ScriptMgr::OnItemUse(Player* pPlayer, Item* pItem)
+
+}
+bool ScriptMgr::OnItemUse(Player* pPlayer, Item* pItem)
 {
 	Script* pTempScript = m_scripts[pItem->GetProto()->ScriptId];
 	
