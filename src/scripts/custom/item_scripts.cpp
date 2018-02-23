@@ -98,6 +98,10 @@ bool Item_OnUse(Player* player, Item* item)
 
 	bool OnGossipSelect(Player* player, Item* item, uint32 sender, uint32 action)
 	{
+		//440004为天赋宝典
+		if (item->GetEntry() != 440004){
+			return false;
+		}
 		player->PlayerTalkClass->ClearMenus();
 		char sMessage[200];
 

@@ -1163,6 +1163,56 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
         _player->SendEquipError(EQUIP_ERR_EQUIPPED_CANT_BE_WRAPPED, item, NULL);
         return;
     }
+//************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//幻化武器设计
+	// transmogrification stone
+	if (gift->GetEntry() == 440006)
+	{
+		//只有装备和武器能够幻化
+		
+		if (item->GetProto()->Class != 2 && item->GetProto()->Class != 4)
+			return;
+		//忽略杂物，圣契 图腾等
+		// skip Miscellaneous / Libram / Idol / Totem
+		if (item->GetProto()->Class == 4 &&
+			(item->GetProto()->SubClass == 0
+				|| item->GetProto()->SubClass == 7
+				|| item->GetProto()->SubClass == 8
+				|| item->GetProto()->SubClass == 9))
+			return;
+
+		// find the slot of the item
+		uint8 slots[4];
+		_player->ViableEquipSlots(item->GetProto(), &slots[0], true);
+		uint8 slot = slots[0];
+
+		// 忽略空位置
+		if (!_player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+			if (slot == EQUIPMENT_SLOT_MAINHAND && _player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+				// when mainhand is empty, use offhand
+				slot = EQUIPMENT_SLOT_OFFHAND;
+			else
+				return;
+
+		//保存数据库
+		uint32 guid = item->GetOwnerGuid().GetCounter();
+		CharacterDatabase.BeginTransaction();
+		// remove old transmog
+		CharacterDatabase.PExecute("DELETE FROM character_transmog WHERE guid = %u AND slot = %u", guid, slot);
+		// insert new transmog
+		CharacterDatabase.PExecute("INSERT INTO character_transmog VALUES ('%u', '%u', '%u', '%u')", guid, slot, item->GetGUIDLow(), 0);
+		CharacterDatabase.CommitTransaction();
+
+		// make transmogrification effect
+		_player->SetUInt32Value(PLAYER_VISIBLE_ITEM_1_0 + (slot * MAX_VISIBLE_ITEM_OFFSET), item->GetEntry());
+
+		// remove the transmog stone
+		uint32 count = 1;
+		_player->DestroyItemCount(gift, count, true);
+		return;
+	}
+//************************************************************************************************************************************
 
     if (item->GetGuidValue(ITEM_FIELD_GIFTCREATOR))         // HasFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_WRAPPED);
     {

@@ -975,7 +975,9 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		uint16 GetInfoLevel();
 		bool LevelUp(uint16 newlevel, uint32 costcoin);//提升用户等级
 
-		bool UpdateEXInfo();  //更新查询信息  
+		bool UpdateEXInfo();  //更新查询信息 
+
+		bool ViableEquipSlots(ItemPrototype const* proto, uint8 *viable_slots, bool transmog /*= false*/) const;
 //**********************************************************************************************************************************
 //*****************************************************************************************************************************
 //双天赋修改

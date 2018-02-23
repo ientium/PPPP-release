@@ -731,7 +731,35 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     sWorld.LogCharacter(pCurrChar, "Login");
     if (!alreadyOnline && !pCurrChar->IsStandState() && !pCurrChar->hasUnitState(UNIT_STAT_STUNNED))
         pCurrChar->SetStandState(UNIT_STAND_STATE_STAND);
+//***********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//幻化载入
 
+	QueryResult* transmog = CharacterDatabase.PQuery("SELECT slot, item_guid FROM character_transmog WHERE guid = '%u'", pCurrChar->GetGUIDLow());
+	if (transmog)
+	{
+		do
+		{
+			Field* fields = transmog->Fetch();
+			if (Item* pItem = pCurrChar->GetItemByGuid(ObjectGuid(HIGHGUID_ITEM, fields[1].GetUInt32())))
+				pCurrChar->SetUInt32Value(PLAYER_VISIBLE_ITEM_1_0 + (fields[0].GetUInt8() * MAX_VISIBLE_ITEM_OFFSET), pItem->GetEntry());
+		} while (transmog->NextRow());
+		delete transmog;
+	}
+//***********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//多天赋提示信息
+	if (pCurrChar->m_specsCount>1) {
+		char sMessage[150];
+		sprintf(sMessage, "当前天赋为:天赋%d", pCurrChar->m_activeSpec);
+		ChatHandler(pCurrChar).PSendSysMessage(sMessage);
+		char tmp[64];
+		time_t currenttime = pCurrChar->memberEXInfo.talenttime;
+		strftime(tmp, sizeof(tmp), " %Y-%m-%d %H", localtime(&currenttime));
+		sprintf(sMessage, "天赋到期时间为:%s", tmp);
+		ChatHandler(pCurrChar).PSendSysMessage(sMessage);
+	}
+//************************************************************************************************************************************
     m_playerLoading = false;
     _clientMoverGuid = pCurrChar->GetObjectGuid();
     delete holder;
@@ -750,17 +778,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     //if (GetWarden())
         //for (int i = 0; i < MAX_MOVE_TYPE; ++i)
             //GetWarden()->SendSpeedChange(UnitMoveType(i), pCurrChar->GetSpeed(UnitMoveType(i)));
-	//多天赋用户
-	if(pCurrChar->m_specsCount>1){
-		char sMessage[150];
-		sprintf(sMessage, "当前天赋为:天赋%d", pCurrChar->m_activeSpec);
-		ChatHandler(pCurrChar).PSendSysMessage(sMessage);
-		char tmp[64];
-		time_t currenttime = pCurrChar->memberEXInfo.talenttime;
-		strftime(tmp, sizeof(tmp), " %Y-%m-%d %H", localtime(&currenttime));
-		sprintf(sMessage, "天赋到期时间为:%s", tmp);
-		ChatHandler(pCurrChar).PSendSysMessage(sMessage);
-    }
+
     ALL_SESSION_SCRIPTS(this, OnLogin(pCurrChar));
 }
 
