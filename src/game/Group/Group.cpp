@@ -2058,9 +2058,11 @@ static void RewardGuildGroupAtKill_helper(Player* pGroupGuy, Unit* pVictim, uint
 	// xp and reputation only in !PvP case
 	if (!PvP)
 	{
-
+//*******************************************************************************************************************************
+//ientium@sina.com 小脏手修改。功能取消
 		// 贡献度给团队的玩家 
-		pGroupGuy->GiveGuildReputation(xp, pVictim);
+		//pGroupGuy->GiveGuildReputation(xp, pVictim);
+//*******************************************************************************************************************************
 		// quest objectives updated only for alive group member or dead but with not released body
 		if (pGroupGuy->isAlive() || !pGroupGuy->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
 		{
