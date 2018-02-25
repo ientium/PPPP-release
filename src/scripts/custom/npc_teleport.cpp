@@ -14,7 +14,7 @@ void sendMainMenu(Player* player, Item* item) {
 	player->ADD_GOSSIP_ITEM(1, " |CFF0000FF【附加特殊功能】|CFF009933 ", 1, GOSSIP_ACTION_INFO_DEF + 9);
 	player->SEND_GOSSIP_MENU(999999, item->GetGUID());
 }
-bool GossipHello_npc_teleport(Player* player, Item* item, SpellCastTargets const& targets)
+bool GossipHello_npc_teleport(Player* player, Item* item)
 {
 	player->PlayerTalkClass->ClearMenus();
 	sendMainMenu(player, item);
@@ -485,7 +485,7 @@ void AddSC_npc_teleport()
 	
 	newscript = new Script;
 	newscript->Name = "npc_teleport";
-	newscript->pItemUse = &GossipHello_npc_teleport;
+	newscript->pQItemUse = &GossipHello_npc_teleport;
 	newscript->pItGossipSelect = &GossipSelect_npc_teleport;
 	newscript->RegisterSelf();
 
