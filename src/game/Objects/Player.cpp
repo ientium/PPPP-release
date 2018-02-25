@@ -3996,7 +3996,7 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
     if (sSpellMgr.IsPrimaryProfessionFirstRankSpell(spell_id))
     {
         uint32 freeProfs = GetFreePrimaryProfessionPoints() + 1;
-        if (freeProfs <= sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL))
+        if (freeProfs <= sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL)+m_skillCount)
             SetFreePrimaryProfessions(freeProfs);
     }
 
@@ -4214,7 +4214,9 @@ void Player::removeTalentSpell(uint32 spell_id, bool disabled, PlayerTalentMap& 
 	if (sSpellMgr.IsPrimaryProfessionFirstRankSpell(spell_id))
 	{
 		uint32 freeProfs = GetFreePrimaryProfessionPoints() + 1;
-		if (freeProfs <= sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL))
+		//判断技能数量
+		
+		if (freeProfs <= sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL) + m_skillCount)
 			SetFreePrimaryProfessions(freeProfs);
 	}
 
@@ -15818,7 +15820,7 @@ void Player::_LoadEXInfo(QueryResult* result)
 
 		m_activeSpec = fields[7].GetUInt32(); //激活天赋
 		m_specsCount = fields[8].GetUInt32(); //天赋数量
-
+		m_skillCount = fields[9].GetUInt8(); //付费技能数量
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costgeneralcoin = 0;
@@ -16902,7 +16904,7 @@ void Player::_SaveEXMemberInfo()
 	UpdateEXInfo();
 
 	SqlStatement stmtDel = CharacterDatabase.CreateStatement(delVIPInfo, "DELETE FROM character_exinfo WHERE guid = ?");
-	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime,guild_reputation,guildtime,talenttime,activeSpec,specsCount) VALUES (?, ?, ?, ?, ?,?,?,?,?,?)");
+	SqlStatement stmtIns = CharacterDatabase.CreateStatement(insVIPInfo, "INSERT INTO character_exinfo (guid,vipcoin,activateTaxiTime,generalcoin,totaltime,guild_reputation,guildtime,talenttime,activeSpec,specsCount,skillCount) VALUES (?, ?, ?, ?, ?,?,?,?,?,?,?)");
 
 	stmtDel.PExecute(GetGUIDLow());
 	stmtIns.addUInt32(GetGUIDLow());
@@ -16927,7 +16929,8 @@ void Player::_SaveEXMemberInfo()
 	stmtIns.addUInt32(memberEXInfo.talenttime);
 	stmtIns.addUInt32(m_activeSpec); //激活天赋
 	stmtIns.addUInt32(m_specsCount);//天赋数量
-
+	stmtIns.addUInt8(m_skillCount);//付费技能数量
+	
 	stmtIns.Execute();
 }
 //********************************************************************************************************************************
@@ -18813,7 +18816,7 @@ template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObje
 
 void Player::InitPrimaryProfessions()
 {
-    SetFreePrimaryProfessions(sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL));
+    SetFreePrimaryProfessions(sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL) + m_skillCount);
 }
 
 void Player::SetComboPoints()

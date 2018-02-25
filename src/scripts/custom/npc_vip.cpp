@@ -82,7 +82,8 @@ there is no difference here (except that default text is chosen with `gameobject
 //瞬飞开通部分
 
 //升级服务
-
+//新开Skill服务。最多开6个
+//skill满技能服务
 
 //改名服务
 /*void SendChildMenu_GOSSIP_SENDER_CHANGENAME(Player* pPlayer, Creature* pCreature, uint32 uiAction) {
@@ -120,7 +121,7 @@ void SendChildMenu_GOSSIP_SENDER_MAIN(Player* pPlayer, Creature* pCreature) {
 	char sMessage[100];
 	//欢迎您，%s
 	sprintf(sMessage, sObjectMgr.GetBroadcastText(110024, 3, pPlayer->getGender(),true), pPlayer->GetName());
-	pPlayer->SEND_GOSSIP_TEXT(sMessage);
+	pPlayer->SEND_GOSSIP_TEXT("赞助商人",sMessage);
 	pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
 
 }
@@ -145,7 +146,7 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_BACK, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
 			//尊敬的 %s,您的剩余积分为 %d,未转化积分为 %d
 		sprintf(sMessage, sObjectMgr.GetBroadcastText(110001, 3, pPlayer->getGender(), true), pPlayer->GetName(), pPlayer->getVipInfo(-1), t_coin);
-		pPlayer->SEND_GOSSIP_TEXT(sMessage);
+		pPlayer->SEND_GOSSIP_TEXT("赞助商人",sMessage);
 		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
 	
 		break;
@@ -179,13 +180,13 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 
 				//尊敬的 %s,您的瞬飞到期时间为 %s
 				sprintf(sMessage, sObjectMgr.GetBroadcastText(110004, 3, pPlayer->getGender(), true), pPlayer->GetName(), tmp);
-				pPlayer->SEND_GOSSIP_TEXT(sMessage);
+				pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
 			}
 
 		}
 		else {
 			//您还没有开通瞬飞
-			pPlayer->SEND_GOSSIP_TEXT(sObjectMgr.GetBroadcastText(110005, 3, pPlayer->getGender()));
+			pPlayer->SEND_GOSSIP_TEXT("赞助商人", sObjectMgr.GetBroadcastText(110005, 3, pPlayer->getGender()));
 		}
 		
 		if (pPlayer->getVipInfo(2) > 0) {
@@ -242,7 +243,7 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 			pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_BACK, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
 			//使用游戏积分提升等级会影响游戏体验，您想好了使用了吗?
 			sprintf(sMessage, sObjectMgr.GetBroadcastText(110012, 3, pPlayer->getGender()));
-			pPlayer->SEND_GOSSIP_TEXT(sMessage);
+			pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
 			pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
 		}
 		else {

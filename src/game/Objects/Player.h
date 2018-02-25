@@ -985,6 +985,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
 		uint8 m_activeSpec;
 		uint8 m_specsCount;
+		uint8 m_skillCount;  //付费技能数量
 		//*****************************************************************************************************************************
 		void SummonIfPossible(bool agree);
 
@@ -1558,7 +1559,9 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		uint8 GetActiveSpec() { return m_activeSpec; }
 		void SetActiveSpec(uint8 spec) { m_activeSpec = spec; }
 		uint8 GetSpecsCount() { return m_specsCount; }
+		uint8 GetSkillCount() { return m_skillCount; }
 		void SetSpecsCount(uint8 count) { m_specsCount = count; }
+		void SetSkillCount(uint8 count) { m_skillCount = count; }
 		void ActivateSpec(uint8 specNum);
 		void UpdateSpecCount(uint8 count);
 //*************************************************************************************************************************************
@@ -1575,7 +1578,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
         uint32 CalculateTalentsPoints() const;
 
         uint32 GetFreePrimaryProfessionPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS2); }
-        void SetFreePrimaryProfessions(uint16 profs) { SetUInt32Value(PLAYER_CHARACTER_POINTS2, profs); }
+        void SetFreePrimaryProfessions(uint16 profs) { SetUInt32Value(PLAYER_CHARACTER_POINTS2, profs+ +m_skillCount); }
         void InitPrimaryProfessions();
 
         PlayerSpellMap const& GetSpellMap() const { return m_spells; }

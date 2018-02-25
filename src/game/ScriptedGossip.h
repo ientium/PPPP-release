@@ -81,6 +81,7 @@ extern uint32 GetSkillLevel(Player* pPlayer,uint32 skill);
 // This fuction Sends the current menu to show to client, a - NPCTEXTID(uint32) , b - npc guid(uint64)
 #define SEND_GOSSIP_MENU(a, b)      PlayerTalkClass->SendGossipMenu(a, b)
 
+#define SEND_GOSSIP_TEXT(a,b) PlayerTalkClass->SendText(a, b)
 // This fuction shows POI(point of interest) to client.
 // a - position X
 // b - position Y

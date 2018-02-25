@@ -113,7 +113,7 @@ bool LoginQueryHolder::Initialize()
 //********************************************************************************************************************************
 // 角色扩展信息载入  ientium@sina.com 小脏手
 
-	res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADEXINFO, "SELECT vipcoin, generalcoin, activateTaxiTime, totaltime,guild_reputation,guildtime,talenttime,activeSpec,specsCount FROM character_exinfo WHERE guid = '%u'", m_guid.GetCounter());
+	res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADEXINFO, "SELECT vipcoin, generalcoin, activateTaxiTime, totaltime,guild_reputation,guildtime,talenttime,activeSpec,specsCount,skillCount FROM character_exinfo WHERE guid = '%u'", m_guid.GetCounter());
 	res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADTALENTS, "SELECT talent_id, current_rank, spec FROM character_talent WHERE guid = '%u'", m_guid.GetCounter());
     return res;
 }
