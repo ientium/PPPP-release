@@ -279,6 +279,7 @@ void AddSC_npc_j_eevee();                            // J'Eevee, the Imp in a Ja
 
 void AddSC_item_scripts();
 void AddSC_npc_teleport();
+void AddSC_npc_vip();
 void AddScripts()
 {
     //Nostalrius
@@ -553,5 +554,5 @@ void AddScripts()
     AddSC_npc_j_eevee();
 	AddSC_item_scripts();
 	AddSC_npc_teleport();
-
+	AddSC_npc_vip();
 }

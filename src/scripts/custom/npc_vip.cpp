@@ -179,7 +179,6 @@ void SendChildMenu_GOSSIP_SENDER_LEVELUP(Player* pPlayer, Creature* pCreature) {
 //瞬飞服务菜单
 void SendChildMenu_GOSSIP_SENDER_FLYING(Player* pPlayer, Creature* pCreature) {
 	uint32 timetemp = pPlayer->getVipInfo(2) - time(NULL);   //获取瞬飞到期时间和当前时间的差值
-
 	char sMessage[100];
 	if (pPlayer->getVipInfo(2) > 0)
 	{
@@ -189,10 +188,11 @@ void SendChildMenu_GOSSIP_SENDER_FLYING(Player* pPlayer, Creature* pCreature) {
 			time_t currenttime = pPlayer->getVipInfo(2);
 
 			char tmp[64];
-			strftime(tmp, sizeof(tmp), " %Y-%m-%d %H:%M:%S", localtime(&currenttime));
+			strftime(tmp, sizeof(tmp), " %Y-%m-%d %H:%M", localtime(&currenttime));
 
 			//尊敬的 %s,您的瞬飞到期时间为 %s
-			sprintf(sMessage, sObjectMgr.GetBroadcastText(110004, 3, pPlayer->getGender(), true), pPlayer->GetName(), tmp);
+			sprintf(sMessage, sObjectMgr.GetBroadcastText(110004, 3, pPlayer->getGender(), true),tmp);
+			
 			pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
 		}
 
@@ -245,15 +245,15 @@ void SendChildMenu_GOSSIP_SENDER_SKILL(Player* pPlayer, Creature* pCreature) {
 void SendChildMenu_GOSSIP_SENDER_SKILLSMENU(Player* pPlayer, Creature* pCreature) {
 	char sMessage[100];
 
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF裁缝|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+1);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF附魔|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+2);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采矿|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+3);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采药|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+4);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF炼金|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+5);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF锻造|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+6);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF剥皮|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+7);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF制皮|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+8);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF工程|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+9);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF裁缝技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+1);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF附魔技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+2);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采矿技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+3);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采药技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+4);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF炼金技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+5);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF锻造技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+6);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF剥皮技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+7);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF制皮技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+8);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF工程技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+9);
 		pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_SKILLSMENU_BACK);
 		//使用游戏积分提升等级会影响游戏体验，您想好了使用了吗?
 		sprintf(sMessage, sObjectMgr.GetBroadcastText(110012, 3, pPlayer->getGender()));
@@ -381,6 +381,16 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 		break;
 	case GOSSIP_SENDER_SKILLSMENU_BACK:  //返回技能学习类菜单
 		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
+		break;
+	case GOSSIP_SENDER_ADDSKILL:// 技能学习类菜单
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU:// 技能学习类菜单
+		SendChildMenu_GOSSIP_SENDER_SKILLSMENU(pPlayer, pCreature);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 1:  //裁缝技能学满
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 2:  //附魔技能学满
 		break;
 	}
 	return true;
