@@ -2143,103 +2143,52 @@ static void RewardGroupAtKill_helper(Player* pGroupGuy, Unit* pVictim, uint32 co
  */
 void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 {
-    bool PvP = pVictim->isCharmedOwnedByPlayerOrPlayer();
+	bool PvP = pVictim->isCharmedOwnedByPlayerOrPlayer();
 
-    // prepare data for near group iteration (PvP and !PvP cases)
-    uint32 xp = 0;
+	// prepare data for near group iteration (PvP and !PvP cases)
+	uint32 xp = 0;
 
-    uint32 count = 0;
-    uint32 sum_level = 0;
-    Player* member_with_max_level = NULL;
-    Player* not_gray_member_with_max_level = NULL;
+	uint32 count = 0;
+	uint32 sum_level = 0;
+	Player* member_with_max_level = NULL;
+	Player* not_gray_member_with_max_level = NULL;
 
-    GetDataForXPAtKill(pVictim, count, sum_level, member_with_max_level, not_gray_member_with_max_level, player_tap);
+	GetDataForXPAtKill(pVictim, count, sum_level, member_with_max_level, not_gray_member_with_max_level, player_tap);
 
-    if (member_with_max_level)
-    {
-        /// not get Xp in PvP or no not gray players in group
-        xp = (PvP || !not_gray_member_with_max_level) ? 0 : MaNGOS::XP::Gain(not_gray_member_with_max_level, pVictim);
+	if (member_with_max_level)
+	{
+		/// not get Xp in PvP or no not gray players in group
+		xp = (PvP || !not_gray_member_with_max_level) ? 0 : MaNGOS::XP::Gain(not_gray_member_with_max_level, pVictim);
 
-        /// skip in check PvP case (for speed, not used)
-        bool is_raid = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsRaid() && isRaidGroup();
-        bool is_dungeon = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsDungeon();
-        float group_rate = MaNGOS::XP::xp_in_group_rate(count, is_raid);
-//***********************************************************************************************************************************************************************		
-		Creature* creature = pVictim->ToCreature();
-		uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
-		
-		uint32 gid = 0;
-		std::string guildname = "";
-		//判断是否是团对本，是否是4大本Boss
-		if (is_raid&&xpex>0) {
-			
-			gid = getGroupGuildid();
-			
-			//判断是否是首杀
-			if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
-				//首杀处理
-				Player* leader = sObjectMgr.GetPlayer(m_leaderGuid);
-				guildname = sGuildMgr.GetGuildNameById(leader->GetGuildId());
-				UpdateFirstBossKillRecord(creature->GetEntry(), gid, guildname);//更新击杀时间为当前时间
-				sLog.outString();
-				sLog.outString(">>Boss首杀时间 %u", time(NULL));
-			}
-			//判断是否是公会团 ,如果是加公会贡献度和击杀记录次数
-			if (gid>0) {
-				UpdateGuildBossRecord(creature->GetEntry(), gid);   //更新Boss击杀记录
-			}
-		}
-//****************************************************************************************************************************************************************************
-		uint16 bossEntryId = sObjectMgr.GetBossEntryId(creature->GetEntry());
-		uint16 iIndex = 0;
+		/// skip in check PvP case (for speed, not used)
+		bool is_raid = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsRaid() && isRaidGroup();
+		bool is_dungeon = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsDungeon();
+		float group_rate = MaNGOS::XP::xp_in_group_rate(count, is_raid);
+
 		for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
-        {
-            Player* pGroupGuy = itr->getSource();
-            if (!pGroupGuy || !pGroupGuy->IsInWorld())
-                continue;
+		{
+			Player* pGroupGuy = itr->getSource();
+			if (!pGroupGuy || !pGroupGuy->IsInWorld())
+				continue;
 
-            // will proccessed later
-            if (pGroupGuy == player_tap)
-                continue;
-			//判断用户生存或者死亡或者尸体距离
-            if (!pGroupGuy->IsAtGroupRewardDistance(pVictim))    
-                continue;                               // member (alive or dead) or his corpse at req. distance
-//******************************************************************************************************************************************************************************
-//如果是团队本并且为公会团
-//ientium@sina.com 小脏手修改
-			//如果是首杀,加入用户首杀记录
-			if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
-				
-				UpdateFirstBossKillMemberRecord(pGroupGuy, bossEntryId, iIndex);   //更新用户信息表
-			}
+			// will proccessed later
+			if (pGroupGuy == player_tap)
+				continue;
 
-			if (is_raid&&xpex>0){
-				if(gid>0){
-					RewardGuildGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, xpex);  //公会贡献度
-				}
-			}
-//******************************************************************************************************************************************************************************
-            RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
-			++iIndex;
+			if (!pGroupGuy->IsAtGroupRewardDistance(pVictim))
+				continue;                               // member (alive or dead) or his corpse at req. distance
+
+			RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
 		}
 
-        if (player_tap)
-        {
-            // member (alive or dead) or his corpse at req. distance
-            if (player_tap->IsAtGroupRewardDistance(pVictim)){
-//******************************************************************************************************************************************************
-				if (is_raid&&xpex>0) {
-					if (gid>0) {
-						RewardGuildGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, xpex);  //公会贡献度
-					}
-				}
-//******************************************************************************************************************************************************
-                RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
-			}
-        }
-    }
+		if (player_tap)
+		{
+			// member (alive or dead) or his corpse at req. distance
+			if (player_tap->IsAtGroupRewardDistance(pVictim))
+				RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
+		}
+	}
 }
-
 struct BroadcastGroupUpdateHelper
 {
     explicit BroadcastGroupUpdateHelper(Unit* _source) : source(_source) {}

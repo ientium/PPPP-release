@@ -47,32 +47,43 @@ there is no difference here (except that default text is chosen with `gameobject
 #define GOSSIP_SENDER_INQUIRECOIN                      60   //查询积分
 #define GOSSIP_SENDER_INSTANTFLIGHT                    61   //瞬飞操作
 #define GOSSIP_SENDER_INSTANTFLIGHT_START              611  //瞬飞开通
+#define GOSSIP_SENDER_INSTANTFLIGHT_BACK               612  //瞬飞返回
 #define GOSSIP_SENDER_CHANGENAME                       62   //改名
 #define GOSSIP_SENDER_CHANGENAME_CHANGE                       621   //改名
+#define GOSSIP_SENDER_CHANGENAME_BACK                       622   //改名返回
 #define GOSSIP_SENDER_LEVELUP                          63   //等级提升
-#define GOSSIP_SENDER_LEVELUP_ONE                    631   //等级提升1级操作
-#define GOSSIP_SENDER_LEVELUP_ALL                    632   //等级提升到60级操作
+#define GOSSIP_SENDER_LEVELUP_ONE                     631   //等级提升1级操作
+#define GOSSIP_SENDER_LEVELUP_ALL                     632   //等级提升到60级操作
+#define GOSSIP_SENDER_LEVELUP_BACK                    633   //等级提升子菜单返回
 #define GOSSIP_SENDER_CHANGERACE                       64   //修改种族
 #define GOSSIP_SENDER_INQUIRECOIN_CHANGE              601   //修改积分
+#define GOSSIP_SENDER_INQUIRECOIN_BACK                602   //积分子菜单返回
+#define GOSSIP_SENDER_ADDSKILL                        65   //增加技能
+#define GOSSIP_SENDER_ADDSKILL_ONE                        651   //增加一个技能
+#define GOSSIP_SENDER_ADDSKILL_MENU                   6502   //技能学满列表子菜单返回
+#define GOSSIP_SENDER_ADDSKILL_BACK                   652   //技能学习子菜单返回
+#define GOSSIP_SENDER_SKILLSMENU_BACK                 6501   //技能学习，学满技能菜单选择
 #define GOSSIP_SENDER_BACK						       59    //返回
 
-#define C_FLYINGMON_COIN          50           //需要50积分开瞬飞一个月
+#define C_FLYINGMON_COIN          50            //需要50积分开瞬飞一个月
 #define C_TIMETOCOIN              7200          //每2小时变化1点积分
 #define C_FLYINGMONSECOND         2592000       //瞬飞30天的秒数
 #define C_CHANGENAME_COIN         300           //改名需要300点
-#define C_LEVELUP_COIN            10          //提升一级需要的点数
-#define C_MAXLEVEL_COIN           500          //直接满级需要点数
+#define C_LEVELUP_COIN            10            //提升一级需要的点数
+#define C_MAXLEVEL_COIN           500           //直接满级需要点数
+#define C_NEW_SKILL_COIN          300           //学习新技能的点数
+#define C_MAX_SKILL_COIN          1000          //学习满技能的点数
 
-
-#define GOSSIP_VIP_TEXT_INQUIRECOIN					110015     //"我想查询我的积分"
+#define GOSSIP_VIP_TEXT_INQUIRECOIN					110015      //"我想查询我的积分"
 #define GOSSIP_VIP_TEXT_INSTANTFLIGHT				110016      //"我想了解瞬飞的事"
-#define GOSSIP_VIP_TEXT_CHANGENAME					110017     //"我想修改名字"
-#define GOSSIP_VIP_TEXT_CHANGENAME_STRING			110018     //"是的,我要修改我的角色名称."
-#define GOSSIP_VIP_TEXT_LEVELUP						110019     //"我想提升等级"
+#define GOSSIP_VIP_TEXT_CHANGENAME					110017      //"我想修改名字"
+#define GOSSIP_VIP_TEXT_CHANGENAME_STRING			110018      //"是的,我要修改我的角色名称."
+#define GOSSIP_VIP_TEXT_LEVELUP						110019      //"我想提升等级"
 #define GOSSIP_VIP_TEXT_CHANGERACE					110020      //"我想改变种族"
+#define GOSSIP_VIP_TEXT_ADDSKILL					110031      //"我想学习新技能"
 #define GOSSIP_VIP_TEXT_BACK						110021      //"返回"
-#define GOSSIP_VIP_TEXT_VENDOR                      110022     //"查看出售物品"
-#define GOSSIP_VIP_TEXT_INQUIRECOIN_CHANGE          110023     //"现在转换积分"
+#define GOSSIP_VIP_TEXT_VENDOR                      110022      //"查看出售物品"
+#define GOSSIP_VIP_TEXT_INQUIRECOIN_CHANGE          110023      //"现在转换积分"
 
 
 //返回操作
@@ -111,13 +122,14 @@ there is no difference here (except that default text is chosen with `gameobject
 void SendChildMenu_GOSSIP_SENDER_MAIN(Player* pPlayer, Creature* pCreature) {
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INQUIRECOIN, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INQUIRECOIN);
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INSTANTFLIGHT, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INSTANTFLIGHT);
-	//pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_CHANGENAME, GOSSIP_SENDER_CHANGENAME, 3);
+	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_ADDSKILL, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL);
 	//pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_CHANGERACE, GOSSIP_SENDER_CHANGERACE, 4);
 	if (pPlayer->GetInfoLevel() < DEFAULT_MAX_LEVEL)
 	{
 		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_LEVELUP, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_LEVELUP);
 	}
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_VENDOR, GOSSIP_VIP_TEXT_VENDOR, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+	
 	char sMessage[100];
 	//欢迎您，%s
 	sprintf(sMessage, sObjectMgr.GetBroadcastText(110024, 3, pPlayer->getGender(),true), pPlayer->GetName());
@@ -132,22 +144,136 @@ bool GossipHello_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature)
 	return true;
 
 }
+void SendChildMenu_GOSSIP_SENDER_INQUIRECOIN(Player* pPlayer, Creature* pCreature) {
+	char sMessage[100];
+	int t_coin = (pPlayer->getVipInfoTimeToCoin() / C_TIMETOCOIN);
+	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INQUIRECOIN_CHANGE, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INQUIRECOIN_CHANGE);
+	pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
+
+	//尊敬的 %s,您的剩余积分为 %d,未转化积分为 %d
+	sprintf(sMessage, sObjectMgr.GetBroadcastText(110001, 3, pPlayer->getGender(), true), pPlayer->GetName(), pPlayer->getVipInfo(-1), t_coin);
+	pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
+	pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+}
+//升级服务菜单
+void SendChildMenu_GOSSIP_SENDER_LEVELUP(Player* pPlayer, Creature* pCreature) {
+	char sMessage[100];
+	if (pPlayer->getLevel()<DEFAULT_MAX_LEVEL) {
+		//"使用%d点积分提升1级."
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110010, 3, pPlayer->getGender()), C_LEVELUP_COIN);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_LEVELUP_ONE);
+		//使用%d点积分迅速升级到%d级
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110011, 3, pPlayer->getGender()), C_MAXLEVEL_COIN, DEFAULT_MAX_LEVEL);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_LEVELUP_ALL);
+		pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
+		//使用游戏积分提升等级会影响游戏体验，您想好了使用了吗?
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110012, 3, pPlayer->getGender()));
+		pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
+		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+	}
+	else {
+		//您已经不需要这项服务了
+		pCreature->MonsterSay(sObjectMgr.GetBroadcastText(110013, 3, pPlayer->getGender()), LANG_UNIVERSAL);
+	}
+}
+//瞬飞服务菜单
+void SendChildMenu_GOSSIP_SENDER_FLYING(Player* pPlayer, Creature* pCreature) {
+	uint32 timetemp = pPlayer->getVipInfo(2) - time(NULL);   //获取瞬飞到期时间和当前时间的差值
+
+	char sMessage[100];
+	if (pPlayer->getVipInfo(2) > 0)
+	{
+		if (timetemp > 0) {
+			char sMessage[100];
+
+			time_t currenttime = pPlayer->getVipInfo(2);
+
+			char tmp[64];
+			strftime(tmp, sizeof(tmp), " %Y-%m-%d %H:%M:%S", localtime(&currenttime));
+
+			//尊敬的 %s,您的瞬飞到期时间为 %s
+			sprintf(sMessage, sObjectMgr.GetBroadcastText(110004, 3, pPlayer->getGender(), true), pPlayer->GetName(), tmp);
+			pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
+		}
+
+	}
+	else {
+		//您还没有开通瞬飞
+		pPlayer->SEND_GOSSIP_TEXT("赞助商人", sObjectMgr.GetBroadcastText(110005, 3, pPlayer->getGender()));
+	}
+
+	if (pPlayer->getVipInfo(2) > 0) {
+
+		//花费 %d积分,续费1个月瞬飞服务
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110006, 3, pPlayer->getGender()), C_FLYINGMON_COIN);
+
+	}
+	else {
+		//1个月瞬飞服务需要花费 %d积分,现在开通吗?
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110007, 3, pPlayer->getGender()), C_FLYINGMON_COIN);
+
+	}
+	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INSTANTFLIGHT_START); //611
+	pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
+	pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+
+}
+
+//技能学习子菜单菜单
+void SendChildMenu_GOSSIP_SENDER_SKILL(Player* pPlayer, Creature* pCreature) {
+	char sMessage[100];
+	if (pPlayer->m_skillCount<=4){
+		//使用%d点积分增加一个新技能
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110034, 3, pPlayer->getGender()), C_NEW_SKILL_COIN);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_ONE);
+		//使用%d点积分迅速升级到%d级
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110035, 3, pPlayer->getGender()), C_MAX_SKILL_COIN);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU);
+		pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
+		//使用游戏积分提升等级会影响游戏体验，您想好了使用了吗?
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110036, 3, pPlayer->getGender()), sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL) + pPlayer->m_skillCount);
+		pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
+		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+	}
+	else {
+		//您已经拥有了6个技能，无法再学习了
+		pCreature->MonsterSay(sObjectMgr.GetBroadcastText(110033, 3, pPlayer->getGender()), LANG_UNIVERSAL);
+	}
+
+}
+//技能学满子菜单菜单
+void SendChildMenu_GOSSIP_SENDER_SKILLSMENU(Player* pPlayer, Creature* pCreature) {
+	char sMessage[100];
+
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF裁缝|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+1);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF附魔|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+2);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采矿|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+3);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采药|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+4);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF炼金|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+5);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF锻造|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+6);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF剥皮|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+7);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF制皮|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+8);
+		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF工程|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+9);
+		pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_SKILLSMENU_BACK);
+		//使用游戏积分提升等级会影响游戏体验，您想好了使用了吗?
+		sprintf(sMessage, sObjectMgr.GetBroadcastText(110012, 3, pPlayer->getGender()));
+		pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
+		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+	
+}
+//菜单选择主函数
+
 bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
 {
-	int t_coin = (pPlayer->getVipInfoTimeToCoin() / C_TIMETOCOIN);
+	
 	uint32 timetemp = pPlayer->getVipInfo(2) - time(NULL);   //获取瞬飞到期时间和当前时间的差值
 	int flag = pPlayer->setVipMemberCoin(C_TIMETOCOIN);  //每7200秒转换1分
-
+	int t_coin = (pPlayer->getVipInfoTimeToCoin() / C_TIMETOCOIN);
 	char sMessage[100];
 	switch (uiAction)
 	{
 	case GOSSIP_SENDER_INQUIRECOIN:   //查询积分
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INQUIRECOIN_CHANGE, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INQUIRECOIN_CHANGE);
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_BACK, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
-			//尊敬的 %s,您的剩余积分为 %d,未转化积分为 %d
-		sprintf(sMessage, sObjectMgr.GetBroadcastText(110001, 3, pPlayer->getGender(), true), pPlayer->GetName(), pPlayer->getVipInfo(-1), t_coin);
-		pPlayer->SEND_GOSSIP_TEXT("赞助商人",sMessage);
-		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+		SendChildMenu_GOSSIP_SENDER_INQUIRECOIN(pPlayer, pCreature);
 	
 		break;
 	case GOSSIP_SENDER_INQUIRECOIN_CHANGE:     //转换积分
@@ -167,42 +293,8 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 
 		}
 		break;
-	case GOSSIP_SENDER_INSTANTFLIGHT:  //瞬飞
-		if (pPlayer->getVipInfo(2) > 0)
-		{
-			if (timetemp > 0) {
-				char sMessage[100];
-
-				time_t currenttime = pPlayer->getVipInfo(2);
-
-				char tmp[64];
-				strftime(tmp, sizeof(tmp), " %Y-%m-%d %H:%M:%S", localtime(&currenttime));
-
-				//尊敬的 %s,您的瞬飞到期时间为 %s
-				sprintf(sMessage, sObjectMgr.GetBroadcastText(110004, 3, pPlayer->getGender(), true), pPlayer->GetName(), tmp);
-				pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
-			}
-
-		}
-		else {
-			//您还没有开通瞬飞
-			pPlayer->SEND_GOSSIP_TEXT("赞助商人", sObjectMgr.GetBroadcastText(110005, 3, pPlayer->getGender()));
-		}
-		
-		if (pPlayer->getVipInfo(2) > 0) {
-			
-			//花费 %d积分,续费1个月瞬飞服务
-			sprintf(sMessage, sObjectMgr.GetBroadcastText(110006, 3, pPlayer->getGender()), C_FLYINGMON_COIN);
-
-		}
-		else {
-			//1个月瞬飞服务需要花费 %d积分,现在开通吗?
-			sprintf(sMessage, sObjectMgr.GetBroadcastText(110007, 3, pPlayer->getGender()), C_FLYINGMON_COIN);
-
-		}
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INSTANTFLIGHT_START); //611
-		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_BACK, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
-		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
+	case GOSSIP_SENDER_INSTANTFLIGHT:  //瞬飞服务子菜单
+		SendChildMenu_GOSSIP_SENDER_FLYING(pPlayer,pCreature);
 	
 		break;
 	case GOSSIP_SENDER_INSTANTFLIGHT_START: //点击瞬飞操作
@@ -232,24 +324,8 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 	case GOSSIP_SENDER_CHANGERACE:     //修改种族
 		//SendActionMenu_npc_prof_leather(pPlayer, pCreature, uiAction);
 		break;
-	case GOSSIP_SENDER_LEVELUP:        //升级
-		if (pPlayer->getLevel()<DEFAULT_MAX_LEVEL) {
-			//"使用%d点积分提升1级."
-			sprintf(sMessage, sObjectMgr.GetBroadcastText(110010, 3, pPlayer->getGender()), C_LEVELUP_COIN);
-			pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_LEVELUP_ONE);
-			//使用%d点积分迅速升级到%d级
-			sprintf(sMessage, sObjectMgr.GetBroadcastText(110011, 3, pPlayer->getGender()), C_MAXLEVEL_COIN, DEFAULT_MAX_LEVEL);
-			pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_LEVELUP_ALL);
-			pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_BACK, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
-			//使用游戏积分提升等级会影响游戏体验，您想好了使用了吗?
-			sprintf(sMessage, sObjectMgr.GetBroadcastText(110012, 3, pPlayer->getGender()));
-			pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
-			pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
-		}
-		else {
-			//您已经不需要这项服务了
-			pCreature->MonsterSay(sObjectMgr.GetBroadcastText(110013, 3, pPlayer->getGender()), LANG_UNIVERSAL);
-		}
+	case GOSSIP_SENDER_LEVELUP:        //升级服务子菜单
+		SendChildMenu_GOSSIP_SENDER_LEVELUP(pPlayer, pCreature);
 		
 		break;
 	case GOSSIP_SENDER_LEVELUP_ONE:     //单级提升操作
@@ -295,29 +371,21 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 	
 		break;
 	case  GOSSIP_SENDER_BACK:        //返回
+	case  GOSSIP_SENDER_INSTANTFLIGHT_BACK:   //瞬飞子菜单返回
+	case  GOSSIP_SENDER_LEVELUP_BACK:    //等级子菜单返回
+	case  GOSSIP_SENDER_INQUIRECOIN_BACK:// 积分修改子菜单返回
+	case  GOSSIP_SENDER_ADDSKILL_BACK://技能学习子菜单返回
+
 		SendChildMenu_GOSSIP_SENDER_MAIN(pPlayer,pCreature);
 		
+		break;
+	case GOSSIP_SENDER_SKILLSMENU_BACK:  //返回技能学习类菜单
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	}
 	return true;
 }
 
-
-/*###
-# start menues for GO (engineering and leatherworking)
-###*/
-
-/*bool GOHello_go_soothsaying_for_dummies(Player* pPlayer, GameObject* pGo)
-{
-pPlayer->ADD_GOSSIP_ITEM(0,GOSSIP_LEARN_DRAGON, GOSSIP_SENDER_INFO, GOSSIP_ACTION_INFO_DEF);
-pPlayer->SEND_GOSSIP_MENU(5584, pGo->GetGUID());
-
-return true;
-}*/
-
-/*###
-#
-###*/
 
 void AddSC_npc_vip()
 {
