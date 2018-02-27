@@ -21927,7 +21927,7 @@ uint16 Player::costVipCoin(uint16 uType, uint32 t_coin)
 
 
 			}
-			DEBUG_LOG("用户的哈佛点数是%d，已升级", memberEXInfo.costvipcoin);
+			DEBUG_LOG("用户的点数是%d，已升级", memberEXInfo.costvipcoin);
 			return  1;
 		}
 		break;

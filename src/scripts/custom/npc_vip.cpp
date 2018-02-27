@@ -389,10 +389,39 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 		SendChildMenu_GOSSIP_SENDER_SKILLSMENU(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 1:  //裁缝技能学满
+		if (!pPlayer->HasSkill(197)) {
+			if (pPlayer->GetFreePrimaryProfessionPoints() <= 0) {
+				pPlayer->GetSession()->SendNotification("你无法再学习新的技能.");
+				break;
+			}
+		}
+		if (pPlayer->getVipInfo(-1)<C_MAX_SKILL_COIN) {
+			pPlayer->GetSession()->SendNotification("积分点数不足.");
+			break;
+		}
+		pPlayer->costVipCoin(2, C_MAX_SKILL_COIN);
+		pPlayer->learnSpell(12180, false);
+		pPlayer->SetSkill(197, 300, 300);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 3:  //采矿技能学满
+		pPlayer->learnSpell(12180, false);
+		pPlayer->SetSkill(333, 300, 300);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 2:  //附魔技能学满
+		if (!pPlayer->HasSkill(333)) {
+			if (pPlayer->GetFreePrimaryProfessionPoints() <= 0) {
+				pPlayer->GetSession()->SendNotification("你无法再学习新的技能.");
+				break;
+			}
+		}
+		if (pPlayer->getVipInfo(-1)<C_MAX_SKILL_COIN) {
+			pPlayer->GetSession()->SendNotification("积分点数不足.");
+			break;
+		}
+		pPlayer->costVipCoin(2, C_MAX_SKILL_COIN);
 		pPlayer->learnSpell(13920, false);
 		pPlayer->SetSkill(333, 300, 300);
+
 		break;
 	}
 	return true;
