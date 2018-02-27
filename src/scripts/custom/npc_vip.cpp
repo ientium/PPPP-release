@@ -391,6 +391,8 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 	case GOSSIP_SENDER_ADDSKILL_MENU + 1:  //裁缝技能学满
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 2:  //附魔技能学满
+		pPlayer->learnSpell(13920, false);
+		pPlayer->SetSkill(333, 300, 300);
 		break;
 	}
 	return true;
