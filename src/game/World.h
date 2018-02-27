@@ -191,6 +191,7 @@ enum eConfigUInt32Values
 //ientiuim@sina.com 小脏手修改
 	CONFIG_UINT32_MAX_GUILD_LEVEL,
 	CONFIG_UINT32_MAX_TALENT_SPEC_COUNT, //默认最大天赋
+	CONFIG_UINT32_MAX_PRIMARY_SKILL_COUNT, //可购买最大数量
 //*************************************************************************************************************
     CONFIG_UINT32_START_PLAYER_LEVEL,
     CONFIG_UINT32_START_PLAYER_MONEY,

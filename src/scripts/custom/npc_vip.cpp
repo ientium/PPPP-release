@@ -95,7 +95,21 @@ there is no difference here (except that default text is chosen with `gameobject
 //升级服务
 //新开Skill服务。最多开6个
 //skill满技能服务
-
+void learnFullLevelSkill(Player* pPlayer,uint32 spellid,uint32 skillid ,uint32 coseCoin) {
+	if (!pPlayer->HasSkill(skillid)) {
+		if (pPlayer->GetFreePrimaryProfessionPoints() <= 0) {
+			pPlayer->GetSession()->SendNotification("你无法再学习新的技能.");
+			return;
+		}
+	}
+	if (pPlayer->getVipInfo(-1)<coseCoin) {
+		pPlayer->GetSession()->SendNotification("积分点数不足.");
+		return;
+	}
+	pPlayer->costVipCoin(2, coseCoin);
+	pPlayer->learnSpell(spellid, false);
+	pPlayer->SetSkill(skillid, 300, 300);
+}
 //改名服务
 /*void SendChildMenu_GOSSIP_SENDER_CHANGENAME(Player* pPlayer, Creature* pCreature, uint32 uiAction) {
 	switch (uiAction)
@@ -120,6 +134,7 @@ there is no difference here (except that default text is chosen with `gameobject
 
 }*/
 void SendChildMenu_GOSSIP_SENDER_MAIN(Player* pPlayer, Creature* pCreature) {
+	pPlayer->PlayerTalkClass->ClearMenus();
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INQUIRECOIN, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INQUIRECOIN);
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INSTANTFLIGHT, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INSTANTFLIGHT);
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_ADDSKILL, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL);
@@ -145,6 +160,7 @@ bool GossipHello_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature)
 
 }
 void SendChildMenu_GOSSIP_SENDER_INQUIRECOIN(Player* pPlayer, Creature* pCreature) {
+	pPlayer->PlayerTalkClass->ClearMenus();
 	char sMessage[100];
 	int t_coin = (pPlayer->getVipInfoTimeToCoin() / C_TIMETOCOIN);
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_VIP_TEXT_INQUIRECOIN_CHANGE, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INQUIRECOIN_CHANGE);
@@ -157,6 +173,7 @@ void SendChildMenu_GOSSIP_SENDER_INQUIRECOIN(Player* pPlayer, Creature* pCreatur
 }
 //升级服务菜单
 void SendChildMenu_GOSSIP_SENDER_LEVELUP(Player* pPlayer, Creature* pCreature) {
+	pPlayer->PlayerTalkClass->ClearMenus();
 	char sMessage[100];
 	if (pPlayer->getLevel()<DEFAULT_MAX_LEVEL) {
 		//"使用%d点积分提升1级."
@@ -213,6 +230,7 @@ void SendChildMenu_GOSSIP_SENDER_FLYING(Player* pPlayer, Creature* pCreature) {
 		sprintf(sMessage, sObjectMgr.GetBroadcastText(110007, 3, pPlayer->getGender()), C_FLYINGMON_COIN);
 
 	}
+	pPlayer->PlayerTalkClass->ClearMenus();
 	pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_INSTANTFLIGHT_START); //611
 	pPlayer->ADD_GOSSIP_ITEM(7, " |cff8000FF返回上一级菜单|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_BACK);
 	pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
@@ -221,8 +239,10 @@ void SendChildMenu_GOSSIP_SENDER_FLYING(Player* pPlayer, Creature* pCreature) {
 
 //技能学习子菜单菜单
 void SendChildMenu_GOSSIP_SENDER_SKILL(Player* pPlayer, Creature* pCreature) {
+	
 	char sMessage[100];
-	if (pPlayer->m_skillCount<=4){
+	
+		pPlayer->PlayerTalkClass->ClearMenus();
 		//使用%d点积分增加一个新技能
 		sprintf(sMessage, sObjectMgr.GetBroadcastText(110034, 3, pPlayer->getGender()), C_NEW_SKILL_COIN);
 		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, sMessage, GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_ONE);
@@ -234,17 +254,14 @@ void SendChildMenu_GOSSIP_SENDER_SKILL(Player* pPlayer, Creature* pCreature) {
 		sprintf(sMessage, sObjectMgr.GetBroadcastText(110036, 3, pPlayer->getGender()), sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL) + pPlayer->m_skillCount);
 		pPlayer->SEND_GOSSIP_TEXT("赞助商人", sMessage);
 		pPlayer->SEND_GOSSIP_MENU(0x7FFFFFFF, pCreature->GetGUID()); //80001为VIP商人菜单
-	}
-	else {
-		//您已经拥有了6个技能，无法再学习了
-		pCreature->MonsterSay(sObjectMgr.GetBroadcastText(110033, 3, pPlayer->getGender()), LANG_UNIVERSAL);
-	}
+	
+	
 
 }
 //技能学满子菜单菜单
 void SendChildMenu_GOSSIP_SENDER_SKILLSMENU(Player* pPlayer, Creature* pCreature) {
 	char sMessage[100];
-
+	pPlayer->PlayerTalkClass->ClearMenus();
 		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF裁缝技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+1);
 		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF附魔技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+2);
 		pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, " |CFF0000FF采矿技能学满|CFF009933 ", GOSSIP_SENDER_MAIN, GOSSIP_SENDER_ADDSKILL_MENU+3);
@@ -382,6 +399,21 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 	case GOSSIP_SENDER_SKILLSMENU_BACK:  //返回技能学习类菜单
 		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
+	case GOSSIP_SENDER_ADDSKILL_ONE://增加一个技能项
+		if (pPlayer->m_skillCount>sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_SKILL_COUNT)) {
+			ChatHandler(pPlayer).SendSysMessage("你无法再学习新的技能.");
+			
+			break;
+		}
+
+		pPlayer->costVipCoin(2, C_NEW_SKILL_COIN);
+		pPlayer->m_skillCount = pPlayer->m_skillCount + 1;
+
+		pPlayer->SetFreePrimaryProfessions(pPlayer->GetFreePrimaryProfessionPoints() + 1);
+		ChatHandler(pPlayer).SendSysMessage("可以学习一个新的技能了.");
+
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
+		break;
 	case GOSSIP_SENDER_ADDSKILL:// 技能学习类菜单
 		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
@@ -389,41 +421,37 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 		SendChildMenu_GOSSIP_SENDER_SKILLSMENU(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 1:  //裁缝技能学满
-		if (!pPlayer->HasSkill(197)) {
-			if (pPlayer->GetFreePrimaryProfessionPoints() <= 0) {
-				pPlayer->GetSession()->SendNotification("你无法再学习新的技能.");
-				break;
-			}
-		}
-		if (pPlayer->getVipInfo(-1)<C_MAX_SKILL_COIN) {
-			pPlayer->GetSession()->SendNotification("积分点数不足.");
-			break;
-		}
-		pPlayer->costVipCoin(2, C_MAX_SKILL_COIN);
-		pPlayer->learnSpell(12180, false);
-		pPlayer->SetSkill(197, 300, 300);
+		learnFullLevelSkill(pPlayer, 12180, 197, C_MAX_SKILL_COIN);
 		break;
-	case GOSSIP_SENDER_ADDSKILL_MENU + 3:  //采矿技能学满
-		pPlayer->learnSpell(12180, false);
-		pPlayer->SetSkill(333, 300, 300);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 2:  //附魔技能学满
-		if (!pPlayer->HasSkill(333)) {
-			if (pPlayer->GetFreePrimaryProfessionPoints() <= 0) {
-				pPlayer->GetSession()->SendNotification("你无法再学习新的技能.");
-				break;
-			}
-		}
-		if (pPlayer->getVipInfo(-1)<C_MAX_SKILL_COIN) {
-			pPlayer->GetSession()->SendNotification("积分点数不足.");
-			break;
-		}
-		pPlayer->costVipCoin(2, C_MAX_SKILL_COIN);
-		pPlayer->learnSpell(13920, false);
-		pPlayer->SetSkill(333, 300, 300);
+		learnFullLevelSkill(pPlayer, 13920,333, C_MAX_SKILL_COIN);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 3:  //采矿技能学满
+		learnFullLevelSkill(pPlayer, 10248, 186, C_MAX_SKILL_COIN);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 4:  //采药技能学满 182
+
+		learnFullLevelSkill(pPlayer, 11993, 182, C_MAX_SKILL_COIN);
 
 		break;
+    case GOSSIP_SENDER_ADDSKILL_MENU + 5:  //炼金技能学满 182
+		learnFullLevelSkill(pPlayer, 11611, 171, C_MAX_SKILL_COIN);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 6:  //锻造学满 182
+		learnFullLevelSkill(pPlayer, 9785, 164, C_MAX_SKILL_COIN);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 7:  //剥皮学满 393
+		learnFullLevelSkill(pPlayer, 10768, 393, C_MAX_SKILL_COIN);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 8:  //制皮学满 165
+		learnFullLevelSkill(pPlayer, 10662, 165, C_MAX_SKILL_COIN);
+		break;
+	case GOSSIP_SENDER_ADDSKILL_MENU + 9:  //工程学满 165
+		learnFullLevelSkill(pPlayer, 12656, 202, C_MAX_SKILL_COIN);
+		break;
 	}
+	SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 	return true;
 }
 
