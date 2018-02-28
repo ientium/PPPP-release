@@ -2795,19 +2795,18 @@ void World::LogMoneyTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount,
 //*************************************************************************************************************************************
 //ientium@sina.com 小脏手修改
  //命令添加VIP积分 数据库记录
-void World::LogVipCoinTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount, const char* type, uint32 data)
+void World::LogVipCoinTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount, const char* type)
 {
-	if (!LogsDatabase || !sWorld.getConfig(CONFIG_BOOL_LOGSDB_TRADES))
+	if (!LogsDatabase)
 		return;
-	static SqlStatementID insLogMoney;
-	SqlStatement logStmt = LogsDatabase.CreateStatement(insLogMoney, "INSERT INTO logs_vip_trade SET sender=?, senderType=?, senderEntry=?, receiver=?, amount=?, type=?,data=?");
+	static SqlStatementID insLog;
+	SqlStatement logStmt = LogsDatabase.CreateStatement(insLog, "INSERT INTO logs_vip_trade SET sender=?, senderType=?, senderEntry=?, receiver=?, amount=?, type=?");
 	logStmt.addUInt32(sender.GetCounter());
 	logStmt.addUInt32(sender.GetHigh());
 	logStmt.addUInt32(sender.GetEntry());
 	logStmt.addUInt32(receiver.GetCounter());
 	logStmt.addUInt32(amount);
 	logStmt.addString(type);
-	logStmt.addUInt32(data);
 	logStmt.Execute();
 }
 //*************************************************************************************************************************************

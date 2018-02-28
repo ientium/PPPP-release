@@ -4991,32 +4991,31 @@ bool ChatHandler::HandleWaterwalkCommand(char* args)
         ChatHandler(player).PSendSysMessage(LANG_YOUR_WATERWALK_SET, args, GetNameLink().c_str());
     return true;
 }
+//*************************************************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
 //VIP积分添加
 bool ChatHandler::HandleVipCoinAddCommand(char* args)
 {
 	if (!*args)
 		return false;
-
-	Player *chr = getSelectedPlayer();
-	if (chr == NULL)
-	{
-		SendSysMessage(LANG_NO_CHAR_SELECTED);
-		SetSentErrorMessage(true);
+	uint32 pGuid;
+	if (!ExtractOptUInt32(&args, pGuid, 0))
 		return false;
-	}
-
+	Player *chr = sObjectMgr.GetPlayer(pGuid);
 	// check online security
 	if (HasLowerSecurity(chr))
 		return false;
 
-	int32 addcoin = atoi(args);
-
-	uint32 moneyuser = chr->memberEXInfo.vipcoin;
-	PSendSysMessage(LANG_YOU_GIVE_MONEY, addcoin, GetNameLink(chr).c_str());
+	int32 addcoin;
+	if (!ExtractOptInt32(&args, addcoin, 0))
+		return false;
+	
+	//PSendSysMessage(LANG_YOU_GIVE_MONEY, addcoin, GetNameLink(chr).c_str());
 	ChatHandler(chr).PSendSysMessage(LANG_YOURS_MONEY_GIVEN, GetNameLink().c_str(), addcoin);
-	chr->LogVipCoin(addcoin, "GM", m_session->GetPlayer()->GetObjectGuid(),time(NULL));
+	chr->LogVipCoin(addcoin, "GM", m_session->GetPlayer()->GetObjectGuid());
 
-	DETAIL_LOG(GetMangosString(LANG_NEW_MONEY), moneyuser, addcoin, chr->memberEXInfo.vipcoin);
+	//DETAIL_LOG(GetMangosString(LANG_NEW_MONEY), moneyuser, addcoin, chr->memberEXInfo.vipcoin);
 
 	return true;
 }
+//*************************************************************************************************************************************************************************

@@ -797,7 +797,7 @@ class World
 //**************************************************************************************************************************************
 //ientium@sina.com 小脏手修改
 //VIP积分数据库记录
-		void LogVipCoinTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount, const char* type,uint32 data);
+		void LogVipCoinTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount, const char* type);
 //**************************************************************************************************************************************
         void LogCharacter(Player* character, const char* action);
         void LogCharacter(WorldSession* sess, uint32 lowGuid, std::string const& charName, const char* action);
