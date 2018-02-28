@@ -4991,3 +4991,32 @@ bool ChatHandler::HandleWaterwalkCommand(char* args)
         ChatHandler(player).PSendSysMessage(LANG_YOUR_WATERWALK_SET, args, GetNameLink().c_str());
     return true;
 }
+//VIP积分添加
+bool ChatHandler::HandleVipCoinAddCommand(char* args)
+{
+	if (!*args)
+		return false;
+
+	Player *chr = getSelectedPlayer();
+	if (chr == NULL)
+	{
+		SendSysMessage(LANG_NO_CHAR_SELECTED);
+		SetSentErrorMessage(true);
+		return false;
+	}
+
+	// check online security
+	if (HasLowerSecurity(chr))
+		return false;
+
+	int32 addcoin = atoi(args);
+
+	uint32 moneyuser = chr->memberEXInfo.vipcoin;
+	PSendSysMessage(LANG_YOU_GIVE_MONEY, addcoin, GetNameLink(chr).c_str());
+	ChatHandler(chr).PSendSysMessage(LANG_YOURS_MONEY_GIVEN, GetNameLink().c_str(), addcoin);
+	chr->LogVipCoin(addcoin, "GM", m_session->GetPlayer()->GetObjectGuid(),time(NULL));
+
+	DETAIL_LOG(GetMangosString(LANG_NEW_MONEY), moneyuser, addcoin, chr->memberEXInfo.vipcoin);
+
+	return true;
+}

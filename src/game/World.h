@@ -794,6 +794,11 @@ class World
          * Database logs system
          */
         void LogMoneyTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount, const char* type, uint32 dataInt);
+//**************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//VIP积分数据库记录
+		void LogVipCoinTrade(ObjectGuid sender, ObjectGuid receiver, uint32 amount, const char* type,uint32 data);
+//**************************************************************************************************************************************
         void LogCharacter(Player* character, const char* action);
         void LogCharacter(WorldSession* sess, uint32 lowGuid, std::string const& charName, const char* action);
         void LogChat(WorldSession* sess, const char* type, std::string const& msg, PlayerPointer target = NULL, uint32 chanId = 0, const char* chanStr = NULL);

@@ -188,6 +188,7 @@ class MANGOS_DLL_SPEC ChatHandler
 		//ientium@sina.com 小脏手修改
 		bool HandleDebugTF1Command(char* args);
 		bool HandleDebugTF2Command(char* args);
+		bool HandleVipCoinAddCommand(char* args);   //VIP积分添加
 //************************************************************************************
         bool HandleDebugExp(char* );
         bool HandleVideoTurn(char* );

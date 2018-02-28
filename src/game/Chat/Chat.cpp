@@ -492,6 +492,10 @@ ChatCommand * ChatHandler::getCommandTable()
         { NODE, "parry",          SEC_GAMEMASTER,     false, &ChatHandler::HandleModifyParryCommand,         "", nullptr },
         { NODE, "combreach",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleModifyCrCommand,            "", nullptr },
         { NODE, "boundrad",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleModifyBrCommand,            "", nullptr },
+		//*************************************************************************************************************************************
+		//ientium@sina.com 小脏手修改 记录VIP积分
+		{ NODE, "membercoins",    SEC_GAMEMASTER,     false, &ChatHandler::HandleVipCoinAddCommand,           "", nullptr },
+		//*************************************************************************************************************************************
         { MSTR, nullptr,       0,                     false, nullptr,                       "", nullptr }
     };
 

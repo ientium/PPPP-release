@@ -14630,6 +14630,30 @@ void Player::LogModifyMoney(int32 d, const char* type, ObjectGuid fromGuid, uint
     }
     ModifyMoney(d);
 }
+//*************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//记录VIP金额添加记录
+void Player::LogVipCoin(int32 d, const char* type, ObjectGuid fromGuid, uint32 data)
+{
+	// Always log GM transactions regardless of threshold
+	if (uint32(abs(d)) > sWorld.getConfig(CONFIG_UINT32_LOG_MONEY_TRADES_TRESHOLD) || GetSession()->GetSecurity() > SEC_PLAYER)
+	{
+		Player * pl=sObjectMgr.GetPlayer(fromGuid);
+		sLog.out(LOG_MONEY_TRADES, "[%s] %s get_vipcoins %ic ", type, GetShortDescription().c_str(), d);
+		if(pl->IsInWorld()){
+			pl->memberEXInfo.vipcoin = pl->memberEXInfo.vipcoin + d;
+		}
+		sWorld.LogVipCoinTrade(fromGuid, GetObjectGuid(), d, type, data);
+		UpdateVipCoinTrade(GetObjectGuid(), d);
+	}
+
+	
+}
+
+
+
+//
+
 
 void Player::MoneyChanged(uint32 count)
 {
@@ -22524,7 +22548,20 @@ bool Player::ViableEquipSlots(ItemPrototype const* proto, uint8 *viable_slots, b
 	}
 	return (viable_slots[0] != NULL_SLOT);
 }
-
+//*************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//命令添加VIP积分 数据库记录
+void Player::UpdateVipCoinTrade(ObjectGuid sender, uint32 amount)
+{
+	if (!LogsDatabase || !sWorld.getConfig(CONFIG_BOOL_LOGSDB_TRADES))
+		return;
+	static SqlStatementID insLogMoney;
+	SqlStatement logStmt = CharacterDatabase.CreateStatement(insLogMoney, "UPDATE character_exinfo SET vipcoin=vipcoin+? WHERE guid=?");
+	logStmt.addUInt32(sender.GetCounter());
+	logStmt.addUInt32(amount);
+	logStmt.Execute();
+}
+//*************************************************************************************************************************************
 /*
 void Player::UpdateSpecCount(uint8 count)
 {

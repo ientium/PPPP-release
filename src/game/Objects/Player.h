@@ -1309,6 +1309,8 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		//
 		void _SaveEXMemberInfo();
 		void _SaveTalents();    //保存天赋信息
+		void LogVipCoin(int32 d, const char* type, ObjectGuid fromGuid, uint32 data);//记录VIP积分添加记录
+		void UpdateVipCoinTrade(ObjectGuid sender, uint32 amount);//更新数据库VIP积分
 //********************************************************************************************************************************
         /*********************************************************/
         /***                    GOSSIP SYSTEM                  ***/

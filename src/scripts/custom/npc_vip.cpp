@@ -422,36 +422,45 @@ bool GossipSelect_npc_prof_vipnpc(Player* pPlayer, Creature* pCreature, uint32 u
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 1:  //裁缝技能学满
 		learnFullLevelSkill(pPlayer, 12180, 197, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 2:  //附魔技能学满
 		learnFullLevelSkill(pPlayer, 13920,333, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 3:  //采矿技能学满
 		learnFullLevelSkill(pPlayer, 10248, 186, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 4:  //采药技能学满 182
 
 		learnFullLevelSkill(pPlayer, 11993, 182, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 
 		break;
     case GOSSIP_SENDER_ADDSKILL_MENU + 5:  //炼金技能学满 182
 		learnFullLevelSkill(pPlayer, 11611, 171, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 6:  //锻造学满 182
 		learnFullLevelSkill(pPlayer, 9785, 164, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 7:  //剥皮学满 393
 		learnFullLevelSkill(pPlayer, 10768, 393, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 8:  //制皮学满 165
 		learnFullLevelSkill(pPlayer, 10662, 165, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	case GOSSIP_SENDER_ADDSKILL_MENU + 9:  //工程学满 165
 		learnFullLevelSkill(pPlayer, 12656, 202, C_MAX_SKILL_COIN);
+		SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
 		break;
 	}
-	SendChildMenu_GOSSIP_SENDER_SKILL(pPlayer, pCreature);
+	
 	return true;
 }
 
