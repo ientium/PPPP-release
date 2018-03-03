@@ -14650,9 +14650,7 @@ void Player::LogVipCoin(int32 d, const char* type, ObjectGuid fromGuid)
 	
 }
 
-
-
-//
+//*************************************************************************************************************************************
 
 
 void Player::MoneyChanged(uint32 count)
