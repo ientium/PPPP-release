@@ -643,7 +643,8 @@ void World::LoadConfigSettings(bool reload)
 //********************************************************************************************************************************
 //ientium@sina.com 小脏手修改
 // 瞬飞标识位以及最大公会等级  ientium@sina.com 小脏手
-	setConfig(CONFIG_BOLL_INSTANT_TAXI, "InstantFlightPaths", false);
+	setConfig(CONFIG_BOOL_INSTANT_TAXI, "InstantFlightPaths", false);
+	setConfig(CONFIG_BOOL_BATTLEGROUND_SCORE_STATISTICS, "Battleground.ScoreStatistics", false);  //设定是否开放统计PVP
 	setConfigMinMax(CONFIG_UINT32_MAX_GUILD_LEVEL, "MaxGuildLevel",3,1,6);
 	if (configNoReload(reload, CONFIG_UINT32_MAX_TALENT_SPEC_COUNT, "MaxTalentSpecCount", MAX_TALENT_SPEC_COUNT))
 		setConfigMinMax(CONFIG_UINT32_MAX_TALENT_SPEC_COUNT, "MaxTalentSpecCount", MAX_TALENT_SPEC_COUNT, 1, MAX_TALENT_SPEC_COUNT);

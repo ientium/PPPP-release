@@ -452,7 +452,8 @@ enum eConfigBoolValues
     CONFIG_BOOL_ALL_TAXI_PATHS,
 //********************************************************************************************************************************
 // 瞬飞标识位  ientium@sina.com 小脏手
-	CONFIG_BOLL_INSTANT_TAXI, 
+	CONFIG_BOOL_INSTANT_TAXI, 
+	CONFIG_BOOL_BATTLEGROUND_SCORE_STATISTICS,   //PVP统计标识
 
 //********************************************************************************************************************************
 

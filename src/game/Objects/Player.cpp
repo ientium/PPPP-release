@@ -18137,7 +18137,7 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
 
 
 
-	if (sWorld.getConfig(CONFIG_BOLL_INSTANT_TAXI))
+	if (sWorld.getConfig(CONFIG_BOOL_INSTANT_TAXI))
 	{
 		TaxiNodesEntry const* lastnode = sTaxiNodesStore.LookupEntry(nodes[nodes.size() - 1]);
 		m_taxi.ClearTaxiDestinations();

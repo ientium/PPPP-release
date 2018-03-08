@@ -248,11 +248,26 @@ class BattleGroundScore
         {}
         virtual ~BattleGroundScore() {}                     //virtual destructor is used when deleting score from scores map
 
+		uint32 GetKillingBlows() const { return KillingBlows; }
+		uint32 GetDeaths() const { return Deaths; }
+		uint32 GetHonorableKills() const { return HonorableKills; }
+		uint32 GetBonusHonor() const { return BonusHonor; }
+		uint32 GetDamageDone() const { return DamageDone; }
+		uint32 GetHealingDone() const { return HealingDone; }
+
+		virtual uint32 GetAttr1() const { return 0; }
+		virtual uint32 GetAttr2() const { return 0; }
+		virtual uint32 GetAttr3() const { return 0; }
+		virtual uint32 GetAttr4() const { return 0; }
+		virtual uint32 GetAttr5() const { return 0; }
+
         uint32 KillingBlows;
         uint32 Deaths;
         uint32 HonorableKills;
         uint32 DishonorableKills;
         uint32 BonusHonor;
+		uint32 DamageDone;
+		uint32 HealingDone;
 };
 
 /*
@@ -356,6 +371,14 @@ class BattleGround
         }
         bool HasFreeSlots() const;
         uint32 GetFreeSlotsForTeam(Team team) const;
+//**********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//统计功能
+		bool isArena() const { return m_IsArena; }
+		bool isBattleGround() const { return !m_IsArena; }
+		bool isRated() const { return m_IsRated; }
+//
+//**********************************************************************************************************************************
 
         typedef std::map<ObjectGuid, BattleGroundPlayer> BattleGroundPlayerMap;
         BattleGroundPlayerMap const& GetPlayers() const { return m_Players; }
@@ -560,6 +583,11 @@ class BattleGround
         BattleGroundBracketId m_BracketId;
         bool   m_InBGFreeSlotQueue;                         // used to make sure that BG is only once inserted into the BattleGroundMgr.BGFreeSlotQueue[bgTypeId] deque
         uint8  m_Winner;                                    // 0=alliance, 1=horde, 2=none
+//*****************************************************************************************************************
+//ientium@sina.com 小脏手修改
+		bool   m_IsArena;
+		bool   m_IsRated;                                   // is this battle rated?
+//******************************************************************************************************************
         int32  m_StartDelayTime;
         bool   m_PrematureCountDown;
         uint32 m_PrematureCountDownTimer;
