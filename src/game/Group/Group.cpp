@@ -2169,13 +2169,13 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 
 		if(is_dungeon){
 			Creature* creature = pVictim->ToCreature(); //牺牲者
-			uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
+			uint16 xpex = getBossCreature(creature->GetCreatureInfo()->Entry); //获取贡献度
 			sLog.outString("Creature ===贡献度:%u",xpex);
 			sLog.outString("Creature ===名字:%s", creature->GetCreatureInfo()->Name);
 			uint32 gid = 0;
 			std::string guildname = "";
 			//判断是否是团对本，是否是4大本Boss
-			if (xpex>0) {
+			/*if (xpex>0) {
 				gid = getGroupGuildid();
 
 				sLog.outString(">>公会团Guildid=== %u",gid);
@@ -2193,7 +2193,7 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 					sLog.outString(">>公会团击杀完成=======1");
 					UpdateGuildBossRecord(creature->GetEntry(), gid);   //更新Boss击杀记录
 				}
-			}
+			}*/
 
 
 		}
