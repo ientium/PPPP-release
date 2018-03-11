@@ -584,6 +584,7 @@ Player::Player(WorldSession *session) : Unit(),
 //ientium@sina.com 小脏手修改
 	m_activeSpec = 0;
 	m_specsCount = 1;
+	m_memberTeam = 0;  //阵营标识
 //***************************************************************************************
     // GM variables
     m_gmInvisibilityLevel = session->GetSecurity();
@@ -734,6 +735,16 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     InitTalentForLevel();
     InitPrimaryProfessions();                               // to max set before any spell added
 
+	switch (race) {
+		case 1:
+		case 3:
+		case 4:
+		case 7:m_memberTeam = 0;break;
+		case 2:
+		case 5:
+		case 6:
+		case 8:m_memberTeam = 1;break;
+	}
     // apply original stats mods before spell loading or item equipment that call before equip _RemoveStatsMods()
     UpdateMaxHealth();                                      // Update max Health (for add bonus from stamina)
     SetHealth(GetMaxHealth());
@@ -15073,8 +15084,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
     //"honorRankPoints, honorRighestRank, honorStanding, honorLastWeekHK, honorLastWeekCP, honorStoredHK, honorStoredDK,"
     // 45               46     47      48      49      50      51      52      53             54              55      56
     //"watchedFaction,  drunk, health, power1, power2, power3, power4, power5, exploredZones, equipmentCache, ammoId, actionBars,"
-    // 57                58
-    //"world_phase_mask, customFlags FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
+    // 57                58             59
+    //"world_phase_mask, customFlags,memberTeam FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
 
     QueryResult *result = holder->GetResult(PLAYER_LOGIN_QUERY_LOADFROM);
 
@@ -15119,7 +15130,21 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
     // overwrite some data fields
     SetByteValue(UNIT_FIELD_BYTES_0, 0, fields[3].GetUInt8()); // race
     SetByteValue(UNIT_FIELD_BYTES_0, 1, fields[4].GetUInt8()); // class
+//**********************************************************************************************************************************
+//ientium@sina.com 直接添加阵营标识，方便统计
 
+	switch (fields[3].GetUInt8()) {
+	case 1:
+	case 3:
+	case 4:
+	case 7:m_memberTeam = 0; break;
+	case 2:
+	case 5:
+	case 6:
+	case 8:m_memberTeam = 1; break;
+	}
+	
+//************************************************************************************************************************************
     uint8 gender = fields[5].GetUInt8() & 0x01;             // allowed only 1 bit values male/female cases (for fit drunk gender part)
     SetByteValue(UNIT_FIELD_BYTES_0, 2, gender);            // gender
 
@@ -15814,7 +15839,7 @@ void Player::_LoadEXInfo(QueryResult* result)
 {
 	if (!result)
 	{
-
+		
 		return;
 	}
 	else {
@@ -15843,9 +15868,11 @@ void Player::_LoadEXInfo(QueryResult* result)
 		m_activeSpec = fields[7].GetUInt32(); //激活天赋
 		m_specsCount = fields[8].GetUInt32(); //天赋数量
 		m_skillCount = fields[9].GetUInt8(); //付费技能数量
+		
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costvipcoin = 0;
 		memberEXInfo.costgeneralcoin = 0;
+		
 
 	}
 }
@@ -16621,7 +16648,7 @@ void Player::SaveToDB(bool online, bool force)
                               "honorRankPoints, honorHighestRank, honorStanding, honorLastWeekHK, honorLastWeekCP, honorStoredHK, honorStoredDK, "
                               "watchedFaction, drunk, health, power1, power2, power3, "
                               "power4, power5, exploredZones, equipmentCache, ammoId, actionBars, "
-                              "area, world_phase_mask, customFlags) "
+                              "area, world_phase_mask, customFlags,memberTeam) "
                               "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
                               "?, ?, ?, ?, ?, "
                               "?, ?, ?, "
@@ -16631,7 +16658,7 @@ void Player::SaveToDB(bool online, bool force)
                               "?, ?, ?, ?, ?, ?, ?, "
                               "?, ?, ?, ?, ?, ?, "
                               "?, ?, ?, ?, ?, ?, "
-                              "?, ?, ?) ");
+                              "?, ?, ?,?) ");
 
     uberInsert.addUInt32(GetGUIDLow());
     uberInsert.addUInt32(GetSession()->GetAccountId());
@@ -16753,6 +16780,8 @@ void Player::SaveToDB(bool online, bool force)
     uberInsert.addUInt32(GetAreaId());
     uberInsert.addUInt32(GetWorldMask());
     uberInsert.addUInt32(customFlags);
+	uberInsert.addUInt8(m_memberTeam);
+
     uberInsert.Execute();
 
     _SaveBGData();
@@ -16952,7 +16981,7 @@ void Player::_SaveEXMemberInfo()
 	stmtIns.addUInt32(m_activeSpec); //激活天赋
 	stmtIns.addUInt32(m_specsCount);//天赋数量
 	stmtIns.addUInt8(m_skillCount);//付费技能数量
-	
+
 	stmtIns.Execute();
 }
 //********************************************************************************************************************************

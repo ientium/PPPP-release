@@ -986,6 +986,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
 		uint8 m_activeSpec;
 		uint8 m_specsCount;
 		uint8 m_skillCount;  //付费技能数量
+		uint8 m_memberTeam;     //阵营标识
 		//*****************************************************************************************************************************
 		void SummonIfPossible(bool agree);
 
