@@ -2164,7 +2164,40 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 		bool is_raid = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsRaid() && isRaidGroup();
 		bool is_dungeon = PvP ? false : sMapStorage.LookupEntry<MapEntry>(pVictim->GetMapId())->IsDungeon();
 		float group_rate = MaNGOS::XP::xp_in_group_rate(count, is_raid);
+//***********************************************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
 
+		if(is_dungeon){
+			Creature* creature = pVictim->ToCreature(); //牺牲者
+			uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
+			sLog.outString("Creature ===贡献度:%u",xpex);
+			sLog.outString("Creature ===名字:%s", creature->GetCreatureInfo()->Name);
+			uint32 gid = 0;
+			std::string guildname = "";
+			//判断是否是团对本，是否是4大本Boss
+			if (xpex>0) {
+				gid = getGroupGuildid();
+
+				sLog.outString(">>公会团Guildid=== %u",gid);
+				//判断是否是首杀
+				if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
+					//首杀处理
+					Player* leader = sObjectMgr.GetPlayer(m_leaderGuid);
+					guildname = sGuildMgr.GetGuildNameById(leader->GetGuildId());
+					UpdateFirstBossKillRecord(creature->GetEntry(), gid, guildname);//更新击杀时间为当前时间
+					
+					sLog.outString(">>Boss首杀时间 %u", time(NULL));
+				}
+				//判断是否是公会团 ,如果是加公会贡献度和击杀记录次数
+				if (gid>0) {
+					sLog.outString(">>公会团击杀完成=======1");
+					UpdateGuildBossRecord(creature->GetEntry(), gid);   //更新Boss击杀记录
+				}
+			}
+
+
+		}
+//***********************************************************************************************************************************************************************
 		for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
 		{
 			Player* pGroupGuy = itr->getSource();
@@ -2180,7 +2213,7 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 
 			RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
 		}
-
+		//团队成员，战斗中退出团队，未离线
 		if (player_tap)
 		{
 			// member (alive or dead) or his corpse at req. distance
@@ -2365,6 +2398,7 @@ uint32 Group::getBossCreature(uint32 bossid)
 	
 	switch (bossid)
 	{
+	    case 14510:   //高阶祭司玛尔里
 		case 12118:   //MC鲁西弗隆
 		case 11982:   //MC玛格曼达
 		case 12259:   //MC基赫纳斯
@@ -2435,7 +2469,7 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 	
 	switch (bossid)
 	{
-		
+	    case 14510:   //高阶祭司玛尔里
 		case 12118:   //MC鲁西弗隆
 		case 11982:   //MC玛格曼达
 		case 12259:   //MC基赫纳斯
@@ -2536,7 +2570,6 @@ void Group::UpdateFirstBossKillRecord(uint32 bossid,uint32 guildid, std::string 
 void Group::UpdateFirstBossKillMemberRecord(Player * player, uint32 bossEntryId,uint16 index) {
 
 	PlayerInstanceInfo* pInfo;
-
 
 	pInfo->m_Name = player->GetName();
 	pInfo->m_guid = player->GetGUIDLow();

@@ -1212,7 +1212,7 @@ void Unit::Kill(Unit* pVictim, SpellEntry const *spellProto, bool durabilityLoss
 
         if (!creature->IsPet())
         {
-            creature->LogDeath(this);
+            creature->LogDeath(this);   //怪物死亡记录
             creature->UpdateCombatState(false);
             creature->UpdateCombatWithZoneState(false);
 

@@ -261,7 +261,11 @@ GuildAddStatus Guild::AddMember(ObjectGuid plGuid, uint32 plRank)
 
     CharacterDatabase.PExecute("INSERT INTO guild_member (guildid,guid,rank,pnote,offnote) VALUES ('%u', '%u', '%u','%s','%s')",
                                m_Id, lowguid, newmember.RankId, dbPnote.c_str(), dbOFFnote.c_str());
-
+//*********************************************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//会员统计数量+1
+	CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildcount=guildcount+1 WHERE guildid='%u'",m_Id);
+//**********************************************************************************************************************************************************
     // If player not in game data in data field will be loaded from guild tables, no need to update it!!
     if (pl)
     {
@@ -586,7 +590,11 @@ bool Guild::DelMember(ObjectGuid guid, bool isDisbanding)
     }
 
     CharacterDatabase.PExecute("DELETE FROM guild_member WHERE guid = '%u'", lowguid);
-
+//*********************************************************************************************************************************************************
+	//ientium@sina.com 小脏手修改
+	//会员统计数量-1
+	CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildcount=guildcount-1 WHERE guildid='%u'", m_Id);
+//**********************************************************************************************************************************************************
     if (!isDisbanding)
         UpdateAccountsNumber();
 
