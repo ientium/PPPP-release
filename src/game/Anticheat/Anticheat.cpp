@@ -1,11 +1,11 @@
 #ifndef USE_ANTICHEAT
 
 #include "Anticheat.h"
-
-AnticheatLibInterface* GetAnticheatLib()
+#include "module\libanticheat.h"
+/*AnticheatLibInterface* GetAnticheatLib()
 {
     static AnticheatDefaultLib l;
     return &l;
 }
-
+*/
 #endif
