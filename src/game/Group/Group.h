@@ -179,7 +179,13 @@ class MANGOS_DLL_SPEC Group
             std::string name;
             uint8       group;
             bool        assistant;
-        };
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//公会id
+			uint32      guildid;
+//********************************************************************************************************************************
+
+		};
         typedef std::list<MemberSlot> MemberSlotList;
         typedef MemberSlotList::const_iterator member_citerator;
 
@@ -327,10 +333,10 @@ class MANGOS_DLL_SPEC Group
 //*********************************************************************************************************************************
 // 是否为一个公会的标识，如果是一个公会则值为团长公会id，否则为0
 //ientium@sina.com 小脏手修改
-//uint32              m_guildid;//公会id
+       uint32  m_guildid;//公会id
 		uint32 getGroupGuildid();
 		uint32 getBossCreature(uint32 bossid);
-		void UpdateGuildBossRecord(uint32 bossid, uint32 guildid);//更新公会击杀记录及贡献度
+		void UpdateGuildBossRecord(uint32 bossid);//更新公会击杀记录及贡献度
 		void UpdateFirstBossKillRecord(uint32 bossid, uint32 guildid, std::string guildstr);  //更新Boss首杀记录
 		//参数为Map的Key
 		void UpdateFirstBossKillMemberRecord(Player * player, uint32 bossEntryId, uint16 index);  //更新Boss的首杀成员信息
@@ -418,7 +424,19 @@ class MANGOS_DLL_SPEC Group
 
             return m_memberSlots.end();
         }
+//************************************************************************************************************************
+//ientium@sina.com  小脏手修改
+//更新guildid
+		uint32 _getGroupGuildid(ObjectGuid)
+		{
+			for (member_witerator itr = m_memberSlots.begin(); itr != m_memberSlots.end(); ++itr)
+				if (itr->guildid != m_guildid)
+					return 0;
 
+			return m_guildid;
+		}
+
+//**************************************************************************************************************************
         void SubGroupCounterIncrease(uint8 subgroup)
         {
             if (m_subGroupsCounts)

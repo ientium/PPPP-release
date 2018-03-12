@@ -3479,9 +3479,10 @@ void ObjectMgr::LoadGroups()
     //                                                    0         1              2           3           4              5      6      7      8      9      10     11     12     13      14          15
    
 //*************************************************************************************************************************************
-//已作废
+//
 //ientium@sina.com 小脏手修改
- QueryResult *result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, isRaid, leaderGuid, groupId FROM groups");
+//Groups表添加guildid字段
+ QueryResult *result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, isRaid, leaderGuid, groupId, guildid FROM groups");
 	
 //*************************************************************************************************************************************
     if (!result)

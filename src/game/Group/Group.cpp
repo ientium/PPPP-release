@@ -147,15 +147,19 @@ bool Group::Create(ObjectGuid guid, const char * name)
 //************************************************************************************************************************************************************************************************************
 //团队创建+公会IDguildid 
 //ientium@sina.com  小脏手修改
-      CharacterDatabase.PExecute("INSERT INTO groups(groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,isRaid) "
-                                   "VALUES('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u')",
+		//团队公会id 等于团长公会id
+		if(sObjectMgr.GetPlayer(guid)->GetGuildId()>0){
+			m_guildid = sObjectMgr.GetPlayer(guid)->GetGuildId();
+		}
+		CharacterDatabase.PExecute("INSERT INTO groups(groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,isRaid,guildid) "
+                                   "VALUES('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u')",
                                    m_Id, m_leaderGuid.GetCounter(), m_mainTankGuid.GetCounter(), m_mainAssistantGuid.GetCounter(), uint32(m_lootMethod),
                                    m_looterGuid.GetCounter(), uint32(m_lootThreshold),
                                    m_targetIcons[0].GetRawValue(), m_targetIcons[1].GetRawValue(),
                                    m_targetIcons[2].GetRawValue(), m_targetIcons[3].GetRawValue(),
                                    m_targetIcons[4].GetRawValue(), m_targetIcons[5].GetRawValue(),
                                    m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
-                                   isRaidGroup());
+                                   isRaidGroup(), m_guildid);
     }
 			
 
@@ -198,7 +202,11 @@ bool Group::LoadGroupFromDB(Field* fields)
 
     for (int i = 0; i < TARGET_ICON_COUNT; ++i)
         m_targetIcons[i] = ObjectGuid(fields[5 + i].GetUInt64());
-
+//*********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+//团队性质
+	m_guildid = fields[16].GetUInt32();
+//*********************************************************************************************************************************
     return true;
 }
 
@@ -214,6 +222,7 @@ bool Group::LoadMemberFromDB(uint32 guidLow, uint8 subgroup, bool assistant)
     member.name      = data->sName;
     member.group     = subgroup;
     member.assistant = assistant;
+
     m_memberSlots.push_back(member);
 
     SubGroupCounterIncrease(subgroup);
@@ -459,7 +468,7 @@ void Group::ChangeLeader(ObjectGuid guid)
     BroadcastPacket(&data, true);
     SendUpdate();
 }
-
+//解散团队操作
 void Group::Disband(bool hideDestroy)
 {
     Player *player;
@@ -1327,6 +1336,10 @@ bool Group::_addMember(ObjectGuid guid, const char* name, bool isAssistant, uint
     member.name      = name;
     member.group     = group;
     member.assistant = isAssistant;
+//********************************************************************************************************************************
+//ientium@sina.com 小脏手修改
+	member.guildid = player->GetGuildId();
+//*********************************************************************************************************************************
     m_memberSlots.push_back(member);
 
     SubGroupCounterIncrease(group);
@@ -1351,15 +1364,26 @@ bool Group::_addMember(ObjectGuid guid, const char* name, bool isAssistant, uint
         if (InstanceGroupBind *bind = GetBoundInstance(player->GetMapId()))
             if (bind->state->GetInstanceId() == player->GetInstanceId())
                 player->m_InstanceValid = true;
-    }
-//************************************************************************************************************************************
-//更新公会id，如果新加入的公会与团长不同 
-//ientium@sina.com 小脏手修改
+		//************************************************************************************************************************************
+		//更新公会id，如果新加入的公会与团长不同 
+		//ientium@sina.com 小脏手修改
+		//如果新加入者不是团长,并且有公会，还和公会团id不同，公会团id变成0;
+		
+	
+	
+	}
+
    if (!isBGGroup())
     {
         // insert into group table
         CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,assistant,subgroup) VALUES('%u','%u','%u','%u')",
                                    m_Id, member.guid.GetCounter(), ((member.assistant == 1) ? 1 : 0), member.group);
+		if (m_leaderGuid != guid) {
+			if (m_guildid != player->GetGuildId() && player->GetGuildId() > 0) {
+				m_guildid = 0;
+				CharacterDatabase.PExecute("UPDATE groups SET guildid= 0 WHERE groupId='%u'", m_Id);
+			}
+		}
     }
 	
 //************************************************************************************************************************************
@@ -1397,16 +1421,23 @@ bool Group::_removeMember(ObjectGuid guid)
     if (!isBGGroup())
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid='%u'", guid.GetCounter());
 
+	//
 
 
-
+	//团长离开
     if (m_leaderGuid == guid)                               // leader was removed
     {
         _updateLeaderFlag(true);
         _chooseLeader();
         return true;
-    }
-
+	}
+	if (!isBGGroup()){
+		//如果为混团，并且离开者与团长guildid不同
+		if (m_guildid == 0 && player->GetGuildId() != m_guildid) {
+			m_guildid = _getGroupGuildid(guid);
+			CharacterDatabase.PExecute("UPDATE groups SET guildid= '%u' WHERE groupId='%u'", m_guildid, m_Id);
+		}
+	}
     return false;
 }
 
@@ -1504,6 +1535,8 @@ void Group::_setLeader(ObjectGuid guid)
         // overwriting the solo binds with permanent ones if necessary
         // in the DB those have been deleted already
         Player::ConvertInstancesToGroup(player, this, slot->guid);
+		
+		
 
         // update the group leader
 //*****************************************************************************************************************************************************************************
@@ -1514,6 +1547,11 @@ void Group::_setLeader(ObjectGuid guid)
 //*****************************************************************************************************************************************************************************	
     _updateLeaderFlag(true);
     m_leaderGuid = slot->guid;
+//************************************************************************************************************************************
+//ientium@sian.com 小脏手修改 
+//设定团长
+	m_guildid = slot->guildid;
+//*************************************************************************************************************************************
     m_leaderName = slot->name;
     m_leaderLastOnline = time(nullptr);
     _updateLeaderFlag();
@@ -2169,31 +2207,32 @@ void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
 
 		if(is_dungeon){
 			Creature* creature = pVictim->ToCreature(); //牺牲者
-			uint16 xpex = getBossCreature(creature->GetCreatureInfo()->Entry); //获取贡献度
-			sLog.outString("Creature ===贡献度:%u",xpex);
-			sLog.outString("Creature ===名字:%s", creature->GetCreatureInfo()->Name);
+			uint16 xpex = getBossCreature(creature->GetEntry()); //获取贡献度
+
+			sLog.outString("Creature ===XPEX:%u", xpex);
+			sLog.outString("Creature ==============================================");
 			uint32 gid = 0;
 			std::string guildname = "";
 			//判断是否是团对本，是否是4大本Boss
-			/*if (xpex>0) {
-				gid = getGroupGuildid();
+			if (xpex>0) {
+				
 
-				sLog.outString(">>公会团Guildid=== %u",gid);
+				sLog.outString(">>GuildInfo  Guildid=== %u", m_guildid);
 				//判断是否是首杀
-				if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
+				/*if (sObjectMgr.GetBossFirstKillTime(creature->GetEntry()) == 0) {
 					//首杀处理
 					Player* leader = sObjectMgr.GetPlayer(m_leaderGuid);
 					guildname = sGuildMgr.GetGuildNameById(leader->GetGuildId());
 					UpdateFirstBossKillRecord(creature->GetEntry(), gid, guildname);//更新击杀时间为当前时间
 					
-					sLog.outString(">>Boss首杀时间 %u", time(NULL));
-				}
+					sLog.outString(">>Boss First %u", time(NULL));
+				}*/
 				//判断是否是公会团 ,如果是加公会贡献度和击杀记录次数
-				if (gid>0) {
-					sLog.outString(">>公会团击杀完成=======1");
-					UpdateGuildBossRecord(creature->GetEntry(), gid);   //更新Boss击杀记录
+				if (m_guildid>0) {
+					sLog.outString(">>GuildGroup Kill =======%u", m_guildid);
+					UpdateGuildBossRecord(creature->GetEntry());   //更新Boss击杀记录
 				}
-			}*/
+			}
 
 
 		}
@@ -2398,7 +2437,9 @@ uint32 Group::getBossCreature(uint32 bossid)
 	
 	switch (bossid)
 	{
-	    case 14510:   //高阶祭司玛尔里
+	    case 14507:   //高阶祭司温诺希斯
+	    case 14517:   //高阶祭司耶克里克
+		case 14510:   //高阶祭司玛尔里
 		case 12118:   //MC鲁西弗隆
 		case 11982:   //MC玛格曼达
 		case 12259:   //MC基赫纳斯
@@ -2408,8 +2449,9 @@ uint32 Group::getBossCreature(uint32 bossid)
 		case 11988:   //MC焚化者古雷曼格
 		case 12098:   //MC萨弗隆先驱者
 		case 12018:   //MC管理者埃克索图斯
-			return 1;
-		break;
+		{          
+		            return 1; 
+		break;}
 		case 12435:   //BWL狂野的拉佐格尔
 		case 13020:   //BWL堕落的瓦拉斯塔兹
 		case 12017:   //BWL勒什雷尔
@@ -2465,11 +2507,14 @@ uint32 Group::getBossCreature(uint32 bossid)
 	}
 }
 //更新公会团的Boss记录及贡献值
-void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
+void Group::UpdateGuildBossRecord(uint32 bossid) {
 	
 	switch (bossid)
 	{
-	    case 14510:   //高阶祭司玛尔里
+		case 14507:   //高阶祭司温诺希斯
+		case 14517:   //高阶祭司耶克里克
+		case 14510:   //高阶祭司玛尔里
+		
 		case 12118:   //MC鲁西弗隆
 		case 11982:   //MC玛格曼达
 		case 12259:   //MC基赫纳斯
@@ -2480,7 +2525,7 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 		case 12098:   //MC萨弗隆先驱者
 		case 12018:   //MC管理者埃克索图斯
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+2 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+2 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 12435:   //狂野的拉佐格尔
@@ -2491,7 +2536,7 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 		case 11981:    //弗莱格尔
 		case 14020:     //克洛玛古斯
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+3 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+3 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 15263:    //TAQ 预言者斯克拉姆
@@ -2505,7 +2550,7 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 		case 15543:     //亚尔基公主
 		case 15544:     //维姆
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+4 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+4 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 15928:    //NAXX 塔迪乌斯
@@ -2528,27 +2573,27 @@ void Group::UpdateGuildBossRecord(uint32 bossid,uint32 guildid) {
 		case 16064:     //NAXX 库尔塔兹领主
 		case 16065:     //NAXX 女公爵布劳缪克丝
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+5 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET guildXP=guildXP+5 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 11502:  //MC 拉格纳罗斯
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET mcnum =mcnum+1,guildXP=guildXP+20 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET mcnum =mcnum+1,guildXP=guildXP+20 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 11583:  //BWL 奈法利安
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET bwlnum =bwlnum+1,guildXP=guildXP+25 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET bwlnum =bwlnum+1,guildXP=guildXP+25 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 15727:  //TAQ 克苏恩
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET taqnum =taqnum+1,guildXP=guildXP+30 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET taqnum =taqnum+1,guildXP=guildXP+30 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 		case 15990:  //NAXX 克尔苏加德
 		{
-			CharacterDatabase.PExecute("UPDATE guild_exinfo SET naxxnum =naxxnum+1,guildXP=guildXP+40 WHERE guildid='%u'", guildid);
+			CharacterDatabase.PExecute("UPDATE guild_exinfo SET naxxnum =naxxnum+1,guildXP=guildXP+40 WHERE guildid='%u'", m_guildid);
 		}
 		break;
 	}
